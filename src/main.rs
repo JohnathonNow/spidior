@@ -1,6 +1,12 @@
 use walkdir::WalkDir;
 use std::fs;
 
+mod parsing;
+mod java;
+
+use parsing::Functions;
+use java::Java;
+
 fn main() -> Result<(), ()> {
     for entry in WalkDir::new(".")
             .follow_links(true)
@@ -13,6 +19,7 @@ fn main() -> Result<(), ()> {
              
             let f_name = entry.file_name().to_string_lossy();
             println!("{}\n{}", f_name, contents);
+            println!("{:?}\n", Java::read_functions(contents));
         }
     }
 
