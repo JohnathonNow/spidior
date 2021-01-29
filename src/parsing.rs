@@ -12,9 +12,9 @@ pub struct Identifier {
 }
 
 pub trait Functions {
-    fn read_functions(text: String) -> Vec<Function>;
+    fn read_functions(text: &String) -> Vec<Function>;
 }
 
 pub trait Identifiers {
-    fn read_identifiers(text: String) -> Vec<Identifier>;
+    fn read_identifiers(text: &String) -> Vec<Identifier>;
 }

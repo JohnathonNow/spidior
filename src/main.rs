@@ -4,7 +4,7 @@ use std::fs;
 mod parsing;
 mod java;
 
-use parsing::Functions;
+use parsing::{Functions, Identifiers};
 use java::Java;
 
 fn main() -> Result<(), ()> {
@@ -19,7 +19,8 @@ fn main() -> Result<(), ()> {
              
             let f_name = entry.file_name().to_string_lossy();
             println!("{}\n{}", f_name, contents);
-            println!("{:?}\n", Java::read_functions(contents));
+            println!("{:?}\n", Java::read_functions(&contents));
+            println!("{:?}\n", Java::read_identifiers(&contents));
         }
     }
 
