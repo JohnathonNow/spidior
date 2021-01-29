@@ -153,6 +153,6 @@ fn functions() {
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("resources/test/functions.java");
     let text = std::fs::read_to_string(d).unwrap();
-    let result = format!("{:?}", Java::read_functions(text));
+    let result = format!("{:?}", Java::read_functions(&text));
     assert_eq!(result, expected);
 }
