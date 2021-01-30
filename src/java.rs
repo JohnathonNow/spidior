@@ -3,6 +3,23 @@ use std::collections::HashMap;
 
 pub struct Java {}
 
+impl Java {
+    fn is_allowed(x: &str) -> bool {
+        !vec![
+            "public",
+            "package",
+            "private",
+            "protected",
+            "import",
+            "void",
+            "true",
+            "false",
+            "extends",
+        ]
+        .contains(&x)
+    }
+}
+
 enum FunctionFsm {
     NAME,
     SPACE,
@@ -24,7 +41,7 @@ impl Functions for Java {
                         s = FunctionFsm::NAME;
                         start = i;
                     }
-                },
+                }
                 FunctionFsm::NAME => {
                     if c == '(' {
                         s = FunctionFsm::PARENS(1);
@@ -32,18 +49,18 @@ impl Functions for Java {
                     } else if !c.is_alphanumeric() {
                         s = FunctionFsm::NONE;
                     }
-                },
+                }
                 FunctionFsm::PARENS(j) => {
                     if c == '(' {
-                        s = FunctionFsm::PARENS(j+1);
+                        s = FunctionFsm::PARENS(j + 1);
                     } else if c == ')' {
-                        s = FunctionFsm::PARENS(j-1);
+                        s = FunctionFsm::PARENS(j - 1);
                     } else if c.is_whitespace() && j == 0 {
                         s = FunctionFsm::SPACE;
                     } else if c == '{' && j == 0 {
                         s = FunctionFsm::BRACE;
                     }
-                },
+                }
                 FunctionFsm::SPACE => {
                     if c.is_alphanumeric() {
                         s = FunctionFsm::NAME;
@@ -53,11 +70,13 @@ impl Functions for Java {
                     } else if !c.is_whitespace() {
                         s = FunctionFsm::NONE;
                     }
-                },
+                }
                 FunctionFsm::BRACE => {
-                    v.push(Function{ name: text[start..end].to_string() });
+                    v.push(Function {
+                        name: text[start..end].to_string(),
+                    });
                     s = FunctionFsm::NONE;
-                },
+                }
             }
         }
         v
@@ -77,9 +96,9 @@ impl Identifiers for Java {
         let mut n1s = 0;
         let mut n1e = 0;
         let mut n2s = 0;
-        let mut n2e = 0;
+        let mut n2e;
         let mut v = Vec::new();
-        let mut stack = Vec::new();
+        let mut stack = Vec::<HashMap<String, String>>::new();
         stack.push(HashMap::new());
         for (i, c) in text.chars().enumerate() {
             if c == '{' {
@@ -95,7 +114,7 @@ impl Identifiers for Java {
                         s = IFsm::NAME1;
                         n1s = i;
                     }
-                },
+                }
                 IFsm::NAME1 => {
                     if c.is_whitespace() {
                         s = IFsm::SPACE;
@@ -107,12 +126,12 @@ impl Identifiers for Java {
                         let name = text[n1s..n1e].to_string();
                         for frame in stack.iter().rev() {
                             if let Some(typ) = frame.get(&name) {
-                                println!("{}: {}\n", typ, name);
+                                v.push(Identifier::new(name, typ.to_string(), n1s, n1e));
                                 break;
                             }
                         }
                     }
-                },
+                }
                 IFsm::SPACE => {
                     if c.is_alphabetic() {
                         s = IFsm::NAME2;
@@ -123,12 +142,12 @@ impl Identifiers for Java {
                         let name = text[n1s..n1e].to_string();
                         for frame in stack.iter().rev() {
                             if let Some(typ) = frame.get(&name) {
-                                println!("{}: {}\n", typ, name);
+                                v.push(Identifier::new(name.clone(), typ.to_string(), n1s, n1e));
                                 break;
                             }
                         }
                     }
-                },
+                }
                 IFsm::NAME2 => {
                     if !c.is_alphanumeric() {
                         //Push new delcaration
@@ -136,11 +155,12 @@ impl Identifiers for Java {
                         n2e = i;
                         let name = text[n2s..n2e].to_string();
                         let typ = text[n1s..n1e].to_string();
-                        if !vec!["public", "package", "private", "protected", "import"].contains(&typ.as_ref()) {
+                        if Java::is_allowed(name.as_ref()) && Java::is_allowed(typ.as_ref()) {
+                            v.push(Identifier::new(name.clone(), typ.clone(), n2s, n2e));
                             stack.last_mut().unwrap().insert(name, typ);
                         }
                     }
-                },
+                }
             }
         }
         v
@@ -154,5 +174,15 @@ fn functions() {
     d.push("resources/test/functions.java");
     let text = std::fs::read_to_string(d).unwrap();
     let result = format!("{:?}", Java::read_functions(&text));
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn identifiers() {
+    let expected = "[Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
+    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("resources/test/identifiers.java");
+    let text = std::fs::read_to_string(d).unwrap();
+    let result = format!("{:?}", Java::read_identifiers(&text));
     assert_eq!(result, expected);
 }

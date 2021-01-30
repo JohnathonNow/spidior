@@ -18,3 +18,14 @@ pub trait Functions {
 pub trait Identifiers {
     fn read_identifiers(text: &String) -> Vec<Identifier>;
 }
+
+impl Identifier {
+    pub fn new(name: String, typ: String, start: usize, end: usize) -> Self {
+        Self {
+            name,
+            typ,
+            start,
+            end,
+        }
+    }
+}

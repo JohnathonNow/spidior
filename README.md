@@ -10,4 +10,7 @@ and run `cargo build`.
 Running
 -------
 
-Right now this program does nothing - it hasn't been written yet.
+Run `./target/debug/spidior` in the directory of your source files.
+In the future, support for specifying directories and regexes will be
+added. For now, `spidior` just attempts to locate function declarations
+and uses of identifiers.
