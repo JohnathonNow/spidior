@@ -1,11 +1,10 @@
 use std::fs;
 use walkdir::WalkDir;
 
-mod java;
-mod parsing;
+mod languages;
 
-use java::Java;
-use parsing::{Functions, Identifiers};
+use languages::clike::Clike;
+use languages::parsing::{Functions, Identifiers};
 
 fn main() -> Result<(), ()> {
     for entry in WalkDir::new(".")
@@ -18,9 +17,10 @@ fn main() -> Result<(), ()> {
             let contents = fs::read_to_string(path).expect("");
 
             let f_name = entry.file_name().to_string_lossy();
+            let clike = Clike { };
             println!("{}\n{}", f_name, contents);
-            println!("{:?}\n", Java::read_functions(&contents));
-            println!("{:?}\n", Java::read_identifiers(&contents));
+            println!("{:?}\n", clike.read_functions(&contents));
+            println!("{:?}\n", clike.read_identifiers(&contents));
         }
     }
 

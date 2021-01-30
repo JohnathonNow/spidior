@@ -1,9 +1,11 @@
-use crate::parsing::{Function, Functions, Identifier, Identifiers};
+use super::parsing::{Function, Functions, Identifier, Identifiers};
 use std::collections::HashMap;
 
-pub struct Java {}
+/// A Functions and Identifiers parser for Clike languages,
+/// including C, C++, and Java.
+pub struct Clike {}
 
-impl Java {
+impl Clike {
     fn is_allowed(x: &str) -> bool {
         !vec![
             "public",
@@ -28,8 +30,8 @@ enum FunctionFsm {
     PARENS(i32),
 }
 
-impl Functions for Java {
-    fn read_functions(text: &str) -> Vec<Function> {
+impl Functions for Clike {
+    fn read_functions(&self, text: &str) -> Vec<Function> {
         let mut s = FunctionFsm::NONE;
         let mut start = 0;
         let mut end = 0;
@@ -88,8 +90,8 @@ enum IFsm {
     NAME2,
 }
 
-impl Identifiers for Java {
-    fn read_identifiers(text: &str) -> Vec<Identifier> {
+impl Identifiers for Clike {
+    fn read_identifiers(&self, text: &str) -> Vec<Identifier> {
         let mut s = IFsm::NONE;
         let mut n1s = 0;
         let mut n1e = 0;
@@ -153,7 +155,7 @@ impl Identifiers for Java {
                         n2e = i;
                         let name = text[n2s..n2e].to_string();
                         let typ = text[n1s..n1e].to_string();
-                        if Java::is_allowed(name.as_ref()) && Java::is_allowed(typ.as_ref()) {
+                        if Clike::is_allowed(name.as_ref()) && Clike::is_allowed(typ.as_ref()) {
                             v.push(Identifier::new(name.clone(), typ.clone(), n2s, n2e));
                             stack.last_mut().unwrap().insert(name, typ);
                         }
@@ -169,9 +171,10 @@ impl Identifiers for Java {
 fn functions() {
     let expected = "[Function { name: \"LightningOvercharge\" }, Function { name: \"getAction\" }, Function { name: \"onSpawn\" }, Function { name: \"getPassiveAction\" }, Function { name: \"getCost\" }, Function { name: \"getName\" }, Function { name: \"getTip\" }, Function { name: \"getActionNetwork\" }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let clike = Clike {};
     d.push("resources/test/functions.java");
     let text = std::fs::read_to_string(d).unwrap();
-    let result = format!("{:?}", Java::read_functions(&text));
+    let result = format!("{:?}", clike.read_functions(&text));
     assert_eq!(result, expected);
 }
 
@@ -180,7 +183,8 @@ fn identifiers() {
     let expected = "[Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("resources/test/identifiers.java");
+    let clike = Clike {};
     let text = std::fs::read_to_string(d).unwrap();
-    let result = format!("{:?}", Java::read_identifiers(&text));
+    let result = format!("{:?}", clike.read_identifiers(&text));
     assert_eq!(result, expected);
 }
