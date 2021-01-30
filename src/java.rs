@@ -29,7 +29,7 @@ enum FunctionFsm {
 }
 
 impl Functions for Java {
-    fn read_functions(text: &String) -> Vec<Function> {
+    fn read_functions(text: &str) -> Vec<Function> {
         let mut s = FunctionFsm::NONE;
         let mut start = 0;
         let mut end = 0;
@@ -72,9 +72,7 @@ impl Functions for Java {
                     }
                 }
                 FunctionFsm::BRACE => {
-                    v.push(Function {
-                        name: text[start..end].to_string(),
-                    });
+                    v.push(Function::new(text[start..end].to_string()));
                     s = FunctionFsm::NONE;
                 }
             }
@@ -91,7 +89,7 @@ enum IFsm {
 }
 
 impl Identifiers for Java {
-    fn read_identifiers(text: &String) -> Vec<Identifier> {
+    fn read_identifiers(text: &str) -> Vec<Identifier> {
         let mut s = IFsm::NONE;
         let mut n1s = 0;
         let mut n1e = 0;
