@@ -11,11 +11,13 @@
 //!<any> 	::= 	"."
 //!<eos> 	::= 	"$"
 //!<char> 	::= 	any non metacharacter | "\" metacharacter
-//!<set> 	::= 	<positive-set> | <negative-set>
+//!<set> 	::= 	<positive-set> | <negative-set> | <query-set>
 //!<positive-set> 	::= 	"[" <set-items> "]"
 //!<negative-set> 	::= 	"[^" <set-items> "]"
+//!<query-set>      ::=     "[[" <query-items> "]]"
 //!<set-items> 	::= 	<set-item> | <set-item> <set-items>
 //!<set-item> 	::= 	<range> | <char>
+//!<query-items>        ::=         <query> | <query> <query-items>
 //!<range> 	::= 	<char> "-" <char>
 #[derive(Debug)]
 pub enum Union {
@@ -90,6 +92,7 @@ pub enum Char {
 pub enum Set {
     Positive(Box<Positive>),
     Negative(Box<Negative>),
+    QuerySet(Box<QuerySet>,)
 }
 
 #[derive(Debug)]
@@ -100,6 +103,11 @@ pub enum Positive {
 #[derive(Debug)]
 pub enum Negative {
     O(Box<Items>),
+}
+
+#[derive(Debug)]
+pub enum QuerySet {
+    O(Box<Queries>),
 }
 
 #[derive(Debug)]
@@ -117,4 +125,16 @@ pub enum Item {
 #[derive(Debug)]
 pub enum Range {
     O(Box<Char>, Box<Char>),
+}
+
+#[derive(Debug)]
+pub enum Queries {
+    Query(Box<Query>),
+    Queries(Box<Query>, Box<Queries>),
+}
+
+#[derive(Debug)]
+pub enum Query {
+    Kv(Box<Simple>, Box<Simple>),
+    Fun
 }
