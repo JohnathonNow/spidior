@@ -17,38 +17,46 @@
 //!<set-items> 	::= 	<set-item> | <set-item> <set-items>
 //!<set-item> 	::= 	<range> | <char>
 //!<range> 	::= 	<char> "-" <char>
+#[derive(Debug)]
 pub enum Union {
-    O(Box<Union>, Box<Simple>),
+    O(Box<Regex>, Box<Simple>),
 }
 
+#[derive(Debug)]
 pub enum Regex {
     Union(Box<Union>),
     Simple(Box<Simple>),
 }
 
+#[derive(Debug)]
 pub enum Simple {
     Concatenation(Box<Concatenation>),
     Basic(Box<Basic>),
 }
 
+#[derive(Debug)]
 pub enum Concatenation {
     O(Box<Simple>, Box<Basic>),
 }
 
+#[derive(Debug)]
 pub enum Basic {
     Star(Box<Star>),
     Plus(Box<Plus>),
     Elementary(Box<Elementary>),
 }
 
+#[derive(Debug)]
 pub enum Star {
     O(Box<Elementary>),
 }
 
+#[derive(Debug)]
 pub enum Plus {
     O(Box<Elementary>),
 }
 
+#[derive(Debug)]
 pub enum Elementary {
     Group(Box<Group>),
     Any(Box<Any>),
@@ -57,46 +65,56 @@ pub enum Elementary {
     Set(Box<Set>),
 }
 
+#[derive(Debug)]
 pub enum Group {
     O(Box<Regex>),
 }
 
+#[derive(Debug)]
 pub enum Any {
     O
 }
 
+#[derive(Debug)]
 pub enum Eos {
     O
 }
 
+#[derive(Debug)]
 pub enum Char {
     Char(char),
     Meta(char),
 }
 
+#[derive(Debug)]
 pub enum Set {
     Positive(Box<Positive>),
     Negative(Box<Negative>),
 }
 
+#[derive(Debug)]
 pub enum Positive {
     O(Box<Items>),
 }
 
+#[derive(Debug)]
 pub enum Negative {
     O(Box<Items>),
 }
 
+#[derive(Debug)]
 pub enum Items {
     Item(Box<Item>),
     Items(Box<Item>, Box<Items>),
 }
 
+#[derive(Debug)]
 pub enum Item {
     Range(Box<Range>),
     Char(Box<Char>),
 }
 
+#[derive(Debug)]
 pub enum Range {
     O(Box<Char>, Box<Char>),
 }

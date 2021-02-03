@@ -1,0 +1,87 @@
+use crate::regexparser::ast::*;
+
+grammar;
+
+pub Regex: Box<Regex> = { // (1)
+    Union => Box::new(Regex::Union(<>)),
+    Simple => Box::new(Regex::Simple(<>)),
+};
+
+Union: Box<Union> = {
+    <l:Regex> "|" <r:Simple> => Box::new(Union::O(l, r)),
+};
+
+Simple: Box<Simple> = {
+    Concatenation => Box::new(Simple::Concatenation(<>)),
+    Basic => Box::new(Simple::Basic(<>)),
+};
+
+Concatenation: Box<Concatenation> = {
+    Simple Basic => Box::new(Concatenation::O(<>)),
+};
+
+Basic: Box<Basic> = {
+    Star => Box::new(Basic::Star(<>)),
+    Plus => Box::new(Basic::Plus(<>)),
+    Elementary => Box::new(Basic::Elementary(<>)),
+};
+
+Plus: Box<Plus> = {
+    <e: Elementary> "+" => Box::new(Plus::O(e)),
+};
+
+Star: Box<Star> = {
+    <e: Elementary> "*" => Box::new(Star::O(e)),
+};
+
+Elementary: Box<Elementary> = {
+    Group => Box::new(Elementary::Group(<>)),
+    Any => Box::new(Elementary::Any(<>)),
+    Eos => Box::new(Elementary::Eos(<>)),
+    Char => Box::new(Elementary::Char(<>)),
+    Set => Box::new(Elementary::Set(<>)),
+};
+
+Group: Box<Group> = {
+    "(" <r: Regex> ")" => Box::new(Group::O(r)),
+};
+
+Any: Box<Any> = {
+    "." => Box::new(Any::O),
+};
+
+Eos: Box<Eos> = {
+    "$" => Box::new(Eos::O),
+};
+
+Char: Box<Char> = {
+    r"\\." => Box::new(Char::Meta(<>.chars().nth(1).unwrap())), 
+    r"." => Box::new(Char::Char(<>.chars().next().unwrap())),
+};
+
+Set: Box<Set> = {
+    Positive => Box::new(Set::Positive(<>)),
+    Negative => Box::new(Set::Negative(<>)),
+};
+
+Positive: Box<Positive> = {
+    "[" <e: Items> "]" => Box::new(Positive::O(e)),
+};
+
+Negative: Box<Negative> = {
+    "[^" <e: Items> "]" => Box::new(Negative::O(e)),
+};
+
+Items: Box<Items> = {
+    Item => Box::new(Items::Item(<>)),
+    Item Items => Box::new(Items::Items(<>)),
+};
+
+Item: Box<Item> = {
+    Range => Box::new(Item::Range(<>)),
+    Char => Box::new(Item::Char(<>)),
+};
+
+Range: Box<Range> = {
+    <l: Char> "-" <r: Char> => Box::new(Range::O(l, r)),
+};

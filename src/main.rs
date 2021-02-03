@@ -1,6 +1,8 @@
 use std::fs;
 use walkdir::WalkDir;
+#[macro_use] extern crate lalrpop_util;
 
+mod regexparser;
 mod languages;
 
 use languages::clike::Clike;
@@ -26,4 +28,3 @@ fn main() -> Result<(), ()> {
 
     Ok(())
 }
-
