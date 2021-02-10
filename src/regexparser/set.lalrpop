@@ -1,0 +1,22 @@
+use crate::regexparser::ast::*;
+
+grammar;
+
+pub Items: Box<Items> = {
+    Item => Box::new(Items::Item(<>)),
+    Item Items => Box::new(Items::Items(<>)),
+};
+
+Item: Box<Item> = {
+    Range => Box::new(Item::Range(<>)),
+    Char => Box::new(Item::Char(<>)),
+};
+
+Range: Box<Range> = {
+    <l: Char> "-" <r: Char> => Box::new(Range::O(l, r)),
+};
+
+Char: Box<Char> = {
+    r"\\." => Box::new(Char::Meta(<>.chars().nth(1).unwrap())), 
+    r"." => Box::new(Char::Char(<>.chars().next().unwrap())),
+};

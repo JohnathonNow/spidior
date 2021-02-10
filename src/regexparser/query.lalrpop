@@ -1,0 +1,17 @@
+use crate::regexparser::ast::*;
+
+grammar;
+
+pub Queries: Box<Queries> = {
+    Query => Box::new(Queries::Query(<>)),
+    <l:Query> "," <r:Queries> => Box::new(Queries::Queries(l, r)),
+};
+
+Query: Box<Query> = {
+    <l:Name> "=" <r:Name> => Box::new(Query::Kv(l, r)),
+    "functions" => Box::new(Query::Fun),
+};
+
+Name: String = {
+    r"[^=,]*" => <>.to_string(),
+}

@@ -107,7 +107,7 @@ pub enum Negative {
 
 #[derive(Debug)]
 pub enum QuerySet {
-    O(Box<Queries>),
+    O(Box<Items>),
 }
 
 #[derive(Debug)]
@@ -135,6 +135,6 @@ pub enum Queries {
 
 #[derive(Debug)]
 pub enum Query {
-    Kv(Box<Simple>, Box<Simple>),
+    Kv(String, String),
     Fun
 }

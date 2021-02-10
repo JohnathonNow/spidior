@@ -74,7 +74,7 @@ Negative: Box<Negative> = {
 };
 
 QuerySet: Box<QuerySet> = {
-    "[[" <e: Queries> "]]" => Box::new(QuerySet::O(e)),
+    "[[" <e: Items> "]]" => Box::new(QuerySet::O(e)),
 };
 
 Items: Box<Items> = {
@@ -83,20 +83,5 @@ Items: Box<Items> = {
 };
 
 Item: Box<Item> = {
-    Range => Box::new(Item::Range(<>)),
     Char => Box::new(Item::Char(<>)),
-};
-
-Range: Box<Range> = {
-    <l: Char> "-" <r: Char> => Box::new(Range::O(l, r)),
-};
-
-Queries: Box<Queries> = {
-    Query => Box::new(Queries::Query(<>)),
-    <l:Query> "," <r:Queries> => Box::new(Queries::Queries(l, r)),
-};
-
-Query: Box<Query> = {
-    <l:Simple> "=" <r:Simple> => Box::new(Query::Kv(l, r)),
-    "functions" => Box::new(Query::Fun),
 };
