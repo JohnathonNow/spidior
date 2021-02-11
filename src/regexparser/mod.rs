@@ -44,8 +44,20 @@ fn parsing_query() {
 #[test]
 fn parsing_command() {
     assert!(parsecommand::parse("%s/westoff/Westhoff").is_err());
-    assert!(parsecommand::parse("%s/westoff/Westhoff/").is_ok());
-    assert!(parsecommand::parse("mod.rs:s/jon/John/g").is_ok());
+    let parsed = parsecommand::parse("%s/westoff/Westhoff/");
+    assert!(parsed.is_ok());
+    let x = parsed.unwrap();
+    assert_eq!(x.location, "%");
+    assert_eq!(x.find, "westoff");
+    assert_eq!(x.replace, "Westhoff");
+    assert_eq!(x.global, false);
+    let parsed = parsecommand::parse("mod.rs:s/jon/John/g");
+    assert!(parsed.is_ok());
+    let x = parsed.unwrap();
+    assert_eq!(x.location, "mod.rs");
+    assert_eq!(x.find, "jon");
+    assert_eq!(x.replace, "John");
+    assert_eq!(x.global, true);
 
 }
 #[test]

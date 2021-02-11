@@ -32,7 +32,7 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
     Ok(ast::ReplaceUnparsed {
         find: regex,
         replace: replacement,
-        location: location,
+        location: location[..location.len()-1].to_string(),
         global: global,
 
     })
