@@ -1,0 +1,8 @@
+use crate::regexparser::ast::*;
+
+grammar;
+
+pub Location: Box<Location> = {
+    "%" => Box::new(Location::All),
+    <s:r"[^%:]*"> ":" => Box::new(Location::Path(s.to_string())),
+};

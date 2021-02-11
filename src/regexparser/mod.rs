@@ -1,7 +1,11 @@
-pub mod ast;
-lalrpop_mod!(pub reg, "/regexparser/reg.rs");
-lalrpop_mod!(pub set, "/regexparser/set.rs");
-lalrpop_mod!(pub query, "/regexparser/query.rs");
+mod ast;
+mod parsecommand;
+
+lalrpop_mod!(reg, "/regexparser/reg.rs");
+lalrpop_mod!(set, "/regexparser/set.rs");
+lalrpop_mod!(query, "/regexparser/query.rs");
+lalrpop_mod!(location, "/regexparser/location.rs");
+
 #[test]
 fn parsing_reg() {
     assert!(reg::RegexParser::new().parse("a|b|c").is_ok());
@@ -36,4 +40,18 @@ fn parsing_query() {
     assert!(query::QueriesParser::new().parse("name=x,type=int").is_ok());
     assert!(query::QueriesParser::new().parse("functions").is_ok());
     assert!(query::QueriesParser::new().parse("fun").is_err());
+}
+#[test]
+fn parsing_command() {
+    assert!(parsecommand::parse("%s/westoff/Westhoff").is_err());
+    assert!(parsecommand::parse("%s/westoff/Westhoff/").is_ok());
+    assert!(parsecommand::parse("mod.rs:s/jon/John/g").is_ok());
+
+}
+#[test]
+fn parsing_location() {
+    println!("{:?}", location::LocationParser::new().parse("..s/../../"));
+    assert!(location::LocationParser::new().parse("../../../:").is_ok());
+    assert!(location::LocationParser::new().parse("%").is_ok());
+    assert!(location::LocationParser::new().parse("%:").is_err());
 }

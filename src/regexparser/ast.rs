@@ -138,3 +138,37 @@ pub enum Query {
     Kv(String, String),
     Fun
 }
+#[derive(Debug)]
+pub enum Location {
+    Path(String),
+    All
+}
+
+#[derive(Debug)]
+pub enum ReplaceList {
+    Item(Box<ReplaceItem>),
+    List(Box<ReplaceItem>, Box<ReplaceList>),
+}
+
+#[derive(Debug)]
+pub enum ReplaceItem {
+    Char(char),
+    BackRef(i32),
+}
+
+#[derive(Debug)]
+pub struct Replace {
+    pub find: Regex,
+    pub replace: ReplaceList,
+    pub global: bool,
+    pub location: Location
+}
+
+
+#[derive(Debug)]
+pub struct ReplaceUnparsed {
+    pub find: String,
+    pub replace: String,
+    pub location: String,
+    pub global: bool,
+}
