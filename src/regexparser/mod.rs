@@ -54,7 +54,7 @@ fn parsing_command() {
     let parsed = parsecommand::parse("mod.rs:s/jon/John/g");
     assert!(parsed.is_ok());
     let x = parsed.unwrap();
-    assert_eq!(x.location, "mod.rs");
+    assert_eq!(x.location, "mod.rs:");
     assert_eq!(x.find, "jon");
     assert_eq!(x.replace, "John");
     assert_eq!(x.global, true);

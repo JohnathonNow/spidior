@@ -13,8 +13,8 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
     if location.chars().last().ok_or(())? != 's' {
         return Err(());
     }
-    let (regex, start) = parse_portion(text, start)?;
-    let (replacement, start) = parse_portion(text, start)?;
+    let (find, start) = parse_portion(text, start)?;
+    let (replace, start) = parse_portion(text, start)?;
     let rest = &text[start..];
     let global = if rest.len() == 0 {
         Ok(false)
@@ -30,10 +30,10 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
         }
     }?;
     Ok(ast::ReplaceUnparsed {
-        find: regex,
-        replace: replacement,
         location: location[..location.len()-1].to_string(),
-        global: global,
+        find,
+        replace,
+        global,
 
     })
 }
@@ -55,7 +55,7 @@ fn parse_portion(text: &str, start: usize) -> Result<(String, usize), ()> {
             '\\' => escape = !escape,
             '/' => {
                 if !escape {
-                    return Ok((text[0..i].to_string(), i + 1));
+                    return Ok((text[start..i].to_string(), i + 1));
                 }
             }
             _ => escape = false,
