@@ -42,25 +42,6 @@ fn parsing_query() {
     assert!(query::QueriesParser::new().parse("fun").is_err());
 }
 #[test]
-fn parsing_command() {
-    assert!(parsecommand::parse("%s/westoff/Westhoff").is_err());
-    let parsed = parsecommand::parse("%s/westoff/Westhoff/");
-    assert!(parsed.is_ok());
-    let x = parsed.unwrap();
-    assert_eq!(x.location, "%");
-    assert_eq!(x.find, "westoff");
-    assert_eq!(x.replace, "Westhoff");
-    assert_eq!(x.global, false);
-    let parsed = parsecommand::parse("mod.rs:s/jon/John/g");
-    assert!(parsed.is_ok());
-    let x = parsed.unwrap();
-    assert_eq!(x.location, "mod.rs:");
-    assert_eq!(x.find, "jon");
-    assert_eq!(x.replace, "John");
-    assert_eq!(x.global, true);
-
-}
-#[test]
 fn parsing_location() {
     println!("{:?}", location::LocationParser::new().parse("..s/../../"));
     assert!(location::LocationParser::new().parse("../../../:").is_ok());
