@@ -10,7 +10,7 @@ use super::ast;
 ///
 /// # Returns
 ///
-/// A Result<ReplaceUnparsed, ()>, where on success, it returns a
+/// A Result<ReplaceUnparsed, Box<dyn Error>>, where on success, it returns a
 /// ReplaceUnparsed containing the LOCATION, REGEX, REPLACEMENT, and
 /// whether it is global or not (ends with a g)
 pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, Box<dyn Error>> {
@@ -50,7 +50,7 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, Box<dyn Error>> {
 ///
 /// # Returns
 ///
-/// A Result<(String, usize), ()>, where on success, it returns a
+/// A Result<(String, usize), Box<dyn Error>>, where on success, it returns a
 /// tuple containing the parsed string and the index of where to start
 /// for future parsing.
 fn parse_portion(text: &str, start: usize) -> Result<(String, usize), Box<dyn Error>> {

@@ -9,7 +9,7 @@ use super::ast::{ReplaceItem, Replacement};
 ///
 /// # Returns
 ///
-/// A Result<Replacement, ()>, where on success, it returns a
+/// A Result<Replacement, Box<dyn Error>>, where on success, it returns a
 /// Replacement containing the set of ReplaceItems
 /// that make up the new replacement string
 pub fn parse(text: &str) -> Result<Replacement, Box<dyn Error>> {
@@ -31,7 +31,7 @@ pub fn parse(text: &str) -> Result<Replacement, Box<dyn Error>> {
 ///
 /// # Returns
 ///
-/// A Result<(ReplaceItem, usize), ()>, where on success, it returns a
+/// A Result<(ReplaceItem, usize), Box<dyn Error>>, where on success, it returns a
 /// tuple containing the parsed ReplaceItem and the index of where to start
 /// for future parsing.
 fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn Error>> {
@@ -53,7 +53,7 @@ fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn 
             ));
         }
     }
-    //If we are here, we are parsing a
+    //If we are here, we are parsing text and not a backreference
     while let Some((i, c)) = chars.next() {
         if c == '\\' {
             return Ok((ReplaceItem::String(text[start..i].to_string()), i));
