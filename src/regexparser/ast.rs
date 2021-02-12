@@ -145,25 +145,18 @@ pub enum Location {
 }
 
 #[derive(Debug)]
-pub enum ReplaceList {
-    Item(Box<ReplaceItem>),
-    List(Box<ReplaceItem>, Box<ReplaceList>),
-}
-
-#[derive(Debug)]
 pub enum ReplaceItem {
-    Char(char),
+    String(String),
     BackRef(i32),
 }
 
 #[derive(Debug)]
 pub struct Replace {
-    pub find: Regex,
-    pub replace: ReplaceList,
+    pub find: Box<Regex>,
+    pub replace: Box<Replacement>,
     pub global: bool,
-    pub location: Location
+    pub location: Box<Location>
 }
-
 
 #[derive(Debug)]
 pub struct ReplaceUnparsed {
@@ -171,4 +164,10 @@ pub struct ReplaceUnparsed {
     pub replace: String,
     pub location: String,
     pub global: bool,
+}
+
+
+#[derive(Debug)]
+pub struct Replacement {
+    pub replacements: Vec<ReplaceItem>
 }

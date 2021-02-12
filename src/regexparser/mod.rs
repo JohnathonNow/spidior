@@ -1,10 +1,38 @@
+use std::error::Error;
+use self::ast::Replace;
+
 mod ast;
 mod parsecommand;
+mod parsereplacement;
 
 lalrpop_mod!(reg, "/regexparser/reg.rs");
 lalrpop_mod!(set, "/regexparser/set.rs");
 lalrpop_mod!(query, "/regexparser/query.rs");
 lalrpop_mod!(location, "/regexparser/location.rs");
+
+/// For parsing out statements of the form
+/// LOCATIONs/REGEX/REPLACEMENT/G
+/// # Arguments
+///
+/// * `text` - A string slice that contains the command to be parsed
+///
+/// # Returns
+///
+/// A Result<Replace, ()>, where on success, it returns a
+/// Replace containing the LOCATION, REGEX, REPLACEMENT, and
+/// whether it is global or not (ends with a g)
+pub fn parse(text: &str) -> Result<ast::Replace, Box<dyn Error>> {
+    let ru = parsecommand::parse(text)?;
+    let location = location::LocationParser::new().parse(&ru.location).map_err(|_| "Failed to parse location")?;
+    let find = reg::RegexParser::new().parse(&ru.find).map_err(|_| "Failed to parse regex")?;
+    let replace = parsereplacement::parse(&ru.replace)?;
+    Ok(Replace {
+        location,
+        find,
+        replace: Box::new(replace),
+        global: ru.global
+    })
+}
 
 #[test]
 fn parsing_reg() {
@@ -47,4 +75,12 @@ fn parsing_location() {
     assert!(location::LocationParser::new().parse("../../../:").is_ok());
     assert!(location::LocationParser::new().parse("%").is_ok());
     assert!(location::LocationParser::new().parse("%:").is_err());
+}
+
+
+#[test]
+fn parsing_entire() {
+    assert!(parse("%s/westoff/Westhoff").is_err());
+    assert!(parse("%s/westoff/Westhoff/").is_ok());
+    assert!(parse("mod.rs:s/jon/John/g").is_ok());
 }

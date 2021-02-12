@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use super::ast;
 
 /// For parsing out statements of the form
@@ -11,10 +13,10 @@ use super::ast;
 /// A Result<ReplaceUnparsed, ()>, where on success, it returns a
 /// ReplaceUnparsed containing the LOCATION, REGEX, REPLACEMENT, and
 /// whether it is global or not (ends with a g)
-pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
+pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, Box<dyn Error>> {
     let (location, start) = parse_portion(text, 0)?;
-    if location.chars().last().ok_or(())? != 's' {
-        return Err(());
+    if location.chars().last().ok_or("Location empty, expected at least an s")? != 's' {
+        return Err("s expected in location".into());
     }
     let (find, start) = parse_portion(text, start)?;
     let (replace, start) = parse_portion(text, start)?;
@@ -23,12 +25,12 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
         Ok(false)
     } else {
         if rest.len() != 1 {
-            Err(())
+            Err("Expected exactly one character after the replacement")
         } else {
-            if rest.chars().next().ok_or(())? == 'g' {
+            if rest.chars().next().ok_or("Really expected at least one last char")? == 'g' {
                 Ok(true)
             } else {
-                Err(())
+                Err("Expected a g")
             }
         }
     }?;
@@ -44,13 +46,14 @@ pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, ()> {
 /// # Arguments
 ///
 /// * `text` - A string slice that contains the command to be parsed
+/// * `start` - The index in the string to start from
 ///
 /// # Returns
 ///
 /// A Result<(String, usize), ()>, where on success, it returns a
 /// tuple containing the parsed string and the index of where to start
 /// for future parsing.
-fn parse_portion(text: &str, start: usize) -> Result<(String, usize), ()> {
+fn parse_portion(text: &str, start: usize) -> Result<(String, usize), Box<dyn Error>> {
     let mut escape = false;
     for (i, c) in text.chars().enumerate().skip(start) {
         match c {
@@ -63,7 +66,7 @@ fn parse_portion(text: &str, start: usize) -> Result<(String, usize), ()> {
             _ => escape = false,
         }
     }
-    Err(())
+    Err("Did not find an unescaped backslash!".into())
 }
 
 #[test]
