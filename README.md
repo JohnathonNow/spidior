@@ -1,6 +1,10 @@
 spidior
 =======
 
+Status
+------
+![Build Status](https://github.com/JohnathonNow/spidior/workflows/Rust/badge.svg)
+
 Building
 --------
 
