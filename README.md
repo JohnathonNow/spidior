@@ -14,7 +14,23 @@ and run `cargo build`.
 Running
 -------
 
-Run `./target/debug/spidior` in the directory of your source files.
-In the future, support for specifying directories and regexes will be
-added. For now, `spidior` just attempts to locate function declarations
-and uses of identifiers.
+The following is the --help output for `spidior`, which shows you how to run it.
+
+```
+USAGE:
+    spidior [OPTIONS] <query>
+
+ARGS:
+    <query>    The query string for find/replace for each file we find in the input
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -p, --path <path>    The path to the files we are reading [default: .]
+```
+
+Note that right now the program isn't complete. Currently, the query is ignored,
+but the analysis of found programs is printed out - including identifier usage and
+function declarations.

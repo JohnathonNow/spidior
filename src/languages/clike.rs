@@ -187,4 +187,6 @@ fn identifiers() {
     let text = std::fs::read_to_string(d).unwrap();
     let result = format!("{:?}", clike.read_identifiers(&text));
     assert_eq!(result, expected);
+    assert!(Clike::is_allowed("bob"));
+    assert!(!Clike::is_allowed("private"));
 }

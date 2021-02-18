@@ -72,6 +72,8 @@ fn parse_portion(text: &str, start: usize) -> Result<(String, usize), Box<dyn Er
 #[test]
 fn parsing_command() {
     assert!(parse("%s/westoff/Westhoff").is_err());
+    assert!(parse("").is_err());
+    assert!(parse("%b/westoff/Westhoff/").is_err());
     let parsed = parse("%s/westoff/Westhoff/");
     assert!(parsed.is_ok());
     let x = parsed.unwrap();
