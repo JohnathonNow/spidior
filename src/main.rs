@@ -24,7 +24,11 @@ struct Opts {
 
 fn main() -> Result<(), ()> {
     let opts: Opts = Opts::parse();
-    println!("Using query '{}'", opts.query);
+    match regexparser::parse(&opts.query) {
+        Ok(replace) => println!("Query parsed successfully {:?}", replace),
+        Err(e) => println!("Could not parse query {:?}", e),
+    }
+    
     for entry in WalkDir::new(opts.path)
         .follow_links(true)
         .into_iter()
@@ -35,6 +39,7 @@ fn main() -> Result<(), ()> {
             if let Ok(contents) = fs::read_to_string(path) {
 
                 let f_name = entry.file_name().to_string_lossy();
+                println!("Parsing file {}", f_name);
                 let clike = Clike { };
                 println!("{:?}\n", clike.read_functions(&contents));
                 println!("{:?}\n", clike.read_identifiers(&contents));
