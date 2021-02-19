@@ -5,6 +5,7 @@ use clap::Clap;
 
 mod regexparser;
 mod languages;
+mod editing;
 
 use languages::clike::Clike;
 use languages::parsing::{Functions, Identifiers};
