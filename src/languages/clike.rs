@@ -1,3 +1,5 @@
+//! Provides the parser for "c-like" languages, including C and Java
+
 use super::parsing::{Function, Functions, Identifier, Identifiers};
 use std::collections::HashMap;
 
@@ -31,6 +33,16 @@ enum FunctionFsm {
 }
 
 impl Functions for Clike {
+    /// Parses out function declarations from c-like code
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - A string slice that contains the code to be parsed
+    ///
+    /// # Returns
+    ///
+    /// A Vec of Function containing information on every function
+    /// declared within text
     fn read_functions(&self, text: &str) -> Vec<Function> {
         let mut s = FunctionFsm::NONE;
         let mut start = 0;
@@ -91,6 +103,16 @@ enum IFsm {
 }
 
 impl Identifiers for Clike {
+    /// Parses out identifier uses from c-like code
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - A string slice that contains the code to be parsed
+    ///
+    /// # Returns
+    ///
+    /// A Vec of Identifier containing information on every use of
+    /// an identifier declared within the code
     fn read_identifiers(&self, text: &str) -> Vec<Identifier> {
         let mut s = IFsm::NONE;
         let mut n1s = 0;
