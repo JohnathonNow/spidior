@@ -5,6 +5,9 @@ use std::{collections::HashSet, error::Error, hash::Hash};
 
 type Atom = char;
 
+pub mod matcher;
+pub mod replacer;
+
 #[derive(Debug, Clone)]
 enum TransitionType {
     Epsilon,

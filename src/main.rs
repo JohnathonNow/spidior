@@ -8,7 +8,6 @@ mod languages;
 mod editing;
 mod nfa;
 mod regex2nfa;
-mod matcher;
 
 use languages::clike::Clike;
 use languages::parsing::{Functions, Identifiers};
@@ -44,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let clike = Clike { };
                 println!("{:?}\n", clike.read_functions(&contents));
                 println!("{:?}\n", clike.read_identifiers(&contents));
-                println!("{} matches", matcher::find(&contents, replace.find.clone()).len());
+                println!("{} matches", nfa::matcher::find(&contents, replace.find.clone()).len());
             }
         }
     }

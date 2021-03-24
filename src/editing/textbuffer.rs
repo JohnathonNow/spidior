@@ -1,7 +1,7 @@
 use std::error::Error;
 /// A buffer for holding text, supporting operations
 /// for replacement of text as well as appending
-struct TextBuffer {
+pub struct TextBuffer {
     buf: String,
 }
 

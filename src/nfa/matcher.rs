@@ -7,18 +7,26 @@ pub struct Group {
     _str: String,
 }
 pub struct Match {
-    _start: usize,
-    _len: usize,
+    start: usize,
+    len: usize,
     _groups: Vec<Group>,
 }
 
 impl Match {
-    pub fn new(_start: usize, _len: usize, _groups: Vec<Group>) -> Self {
+    pub fn new(start: usize, len: usize, _groups: Vec<Group>) -> Self {
         Self {
-            _start,
-            _len,
+            start,
+            len,
             _groups,
         }
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
     }
 }
 
@@ -39,7 +47,7 @@ pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
             }
         }
         if let Some(x) = new {
-            is += x._len - 1;
+            is += x.len - 1;
             v.push(x);
         }
         is += 1;
