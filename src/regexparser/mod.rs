@@ -1,7 +1,7 @@
 use self::ast::Replace;
 use std::error::Error;
 
-mod ast;
+pub mod ast;
 mod parsecommand;
 mod parsereplacement;
 

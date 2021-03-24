@@ -6,6 +6,8 @@ use clap::Clap;
 mod regexparser;
 mod languages;
 mod editing;
+mod nfa;
+mod regex2nfa;
 
 use languages::clike::Clike;
 use languages::parsing::{Functions, Identifiers};
@@ -26,7 +28,10 @@ struct Opts {
 fn main() -> Result<(), ()> {
     let opts: Opts = Opts::parse();
     match regexparser::parse(&opts.query) {
-        Ok(replace) => println!("Query parsed successfully {:?}", replace),
+        Ok(replace) => {
+            println!("Query parsed successfully {:?}", replace);
+            println!("Regex: {:?}", regex2nfa::build_nfa(replace.find));
+        },
         Err(e) => println!("Could not parse query {:?}", e),
     }
     
