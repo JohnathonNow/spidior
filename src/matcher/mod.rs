@@ -3,19 +3,20 @@ use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
 pub struct Group {
     _start: usize,
-    _end: usize,
+    _len: usize,
+    _str: String,
 }
 pub struct Match {
     _start: usize,
-    _end: usize,
+    _len: usize,
     _groups: Vec<Group>,
 }
 
 impl Match {
-    pub fn new(_start: usize, _end: usize, _groups: Vec<Group>) -> Self {
+    pub fn new(_start: usize, _len: usize, _groups: Vec<Group>) -> Self {
         Self {
             _start,
-            _end,
+            _len,
             _groups,
         }
     }
@@ -25,16 +26,23 @@ pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let (nfa, start, end) = build_nfa(regex);
     let ctx0 = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
-    let mut ie = 0;
-    for is in 0..input.len() {
+    let mut is = 0;
+    while is < input.len() {
+        let mut new = None;
         let mut ctx = ctx0.clone();
+        let mut il = 0;
         for c in input.chars().skip(is) {
-            ie += 1;
+            il += 1;
             ctx = ctx.step(&nfa, c);
             if ctx.contains(&end) {
-                v.push(Match::new(is, ie, Vec::new()));
+                new = Some(Match::new(is, il, Vec::new()));
             }
         }
+        if let Some(x) = new {
+            is += x._len - 1;
+            v.push(x);
+        }
+        is += 1;
     }
     v
 }
@@ -47,6 +55,6 @@ fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
     assert_eq!(find(&"bo".to_string(), regex).len(), 0); //no match
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
-    assert_eq!(find(&"joee".to_string(), regex).len(), 4); //"joe", "e" (first), "ee", "e" (last)
+    assert_eq!(find(&"joee".to_string(), regex).len(), 2); //"joe", "e"
     Ok(())
 }
