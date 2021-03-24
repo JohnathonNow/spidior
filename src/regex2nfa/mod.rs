@@ -1,41 +1,46 @@
 //! This module is for building an `nfa::Nfa` from a
 //! a `regexparser::ast::Regex`
-use crate::nfa::NodePointer;
+use std::error::Error;
+
+use crate::{nfa::{Context, NodePointer}, regexparser};
 
 use super::nfa::Nfa;
 use super::regexparser::ast::*;
 
-pub fn build_nfa(r: Box<Regex>) -> Nfa {
+pub fn build_nfa(r: Box<Regex>) -> (Nfa, NodePointer, NodePointer) {
     let mut nfa = Nfa::new(Vec::new());
-    do_regex(r, &mut nfa);
-    nfa
+    let (s, d) =do_regex(r, &mut nfa);
+    (nfa, s, d)
 }
 
-fn do_regex(r: Box<Regex>, nfa: &mut Nfa) -> NodePointer {
+fn do_regex(r: Box<Regex>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
         Regex::Union(r) => do_union(r, nfa),
         Regex::Simple(r) => do_simple(r, nfa),
     }
 }
 
-fn do_union(r: Box<Union>, nfa: &mut Nfa) -> NodePointer {
+fn do_union(r: Box<Union>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Union::O(x, y) = *r;
     let a = do_regex(x, nfa);
     let b = do_simple(y, nfa);
-    let n = nfa.new_node();
-    nfa.add_transition_epsilon(&n, &a).unwrap();
-    nfa.add_transition_epsilon(&n, &b).unwrap();
-    n
+    let s = nfa.new_node();
+    let d = nfa.new_node();
+    nfa.add_transition_epsilon(&s, &a.0).unwrap();
+    nfa.add_transition_epsilon(&s, &b.0).unwrap();
+    nfa.add_transition_epsilon(&a.1, &d).unwrap();
+    nfa.add_transition_epsilon(&b.1, &d).unwrap();
+    (s, d)
 }
 
-fn do_simple(r: Box<Simple>, nfa: &mut Nfa) -> NodePointer {
+fn do_simple(r: Box<Simple>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
         Simple::Concatenation(r) => do_concat(r, nfa),
         Simple::Basic(r) => do_basic(r, nfa),
     }
 }
 
-fn do_basic(r: Box<Basic>, nfa: &mut Nfa) -> NodePointer {
+fn do_basic(r: Box<Basic>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
         Basic::Star(r) => do_star(r, nfa),
         Basic::Plus(r) => do_plus(r, nfa),
@@ -43,36 +48,36 @@ fn do_basic(r: Box<Basic>, nfa: &mut Nfa) -> NodePointer {
     }
 }
 
-fn do_concat(r: Box<Concatenation>, nfa: &mut Nfa) -> NodePointer {
+fn do_concat(r: Box<Concatenation>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Concatenation::O(x, y) = *r;
-    let src = do_simple(x, nfa);
-    let dst = do_basic(y, nfa);
-    nfa.add_transition_epsilon(&src, &dst).unwrap();
-    src
+    let (ls, ld) = do_simple(x, nfa);
+    let (rs,rd) = do_basic(y, nfa);
+    nfa.add_transition_epsilon(&ld, &rs).unwrap();
+    (ls, rd)
 }
 
-fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> NodePointer {
+fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
-        Elementary::Group(r) => unimplemented!(),
-        Elementary::Any(r) => unimplemented!(),
-        Elementary::Eos(r) => unimplemented!(),
+        Elementary::Group(_) => unimplemented!(),
+        Elementary::Any(_) => unimplemented!(),
+        Elementary::Eos(_) => unimplemented!(),
         Elementary::Char(r) => do_char(r, nfa),
-        Elementary::Set(r) => unimplemented!(),
+        Elementary::Set(_) => unimplemented!(),
     }
 }
 
-fn do_star(r: Box<Star>, nfa: &mut Nfa) -> NodePointer {
+fn do_star(r: Box<Star>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Star::O(r) = *r;
-    let src = do_elem(r, nfa);
-    nfa.add_transition_epsilon(&src,&src).unwrap();
-    src
+    let (src, dst) = do_elem(r, nfa);
+    nfa.add_transition_epsilon(&dst,&src).unwrap();
+    (src, dst)
 }
 
-fn do_plus(r: Box<Plus>, nfa: &mut Nfa) -> NodePointer {
+fn do_plus(_r: Box<Plus>, _nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     unimplemented!();
 }
 
-fn do_char(r: Box<Char>, nfa: &mut Nfa) -> NodePointer {
+fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let src = nfa.new_node();
     let dst = nfa.new_node();
     let c = match *r {
@@ -80,5 +85,32 @@ fn do_char(r: Box<Char>, nfa: &mut Nfa) -> NodePointer {
         Char::Meta(c) => c,
     };
     nfa.add_transition_alpha(&src, &dst, c).unwrap();
-    src
+    (src, dst)
+}
+
+#[test]
+fn test_regex() -> Result<(), Box<dyn Error>> {
+    let regex = regexparser::parse("%s/bob|joe|e*//g")?;
+    let (nfa, start, end) = build_nfa(regex.find);
+    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    for c in "bob".chars() {
+        ctx = ctx.step(&nfa, c);
+    }
+    assert!(ctx.contains(&end));
+    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    for c in "bobd".chars() {
+        ctx = ctx.step(&nfa, c);
+    }
+    assert!(!ctx.contains(&end));
+    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    for c in "bo".chars() {
+        ctx = ctx.step(&nfa, c);
+    }
+    assert!(!ctx.contains(&end));
+    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    for c in "eeeeeeeeee".chars() {
+        ctx = ctx.step(&nfa, c);
+    }
+    assert!(ctx.contains(&end));
+    Ok(())
 }

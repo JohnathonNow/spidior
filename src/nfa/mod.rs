@@ -6,12 +6,6 @@ use std::{collections::HashSet, error::Error, hash::Hash};
 type Atom = char;
 
 #[derive(Debug, Clone)]
-enum NodeType {
-    Accepting,
-    Rejecting,
-}
-
-#[derive(Debug, Clone)]
 enum TransitionType {
     Epsilon,
     Alpha(Atom),
@@ -41,13 +35,11 @@ impl NodePointer {
 #[derive(Debug, Clone)]
 pub struct Node {
     transitions: Vec<Transition>,
-    kind: NodeType,
 }
 impl Node {
     pub fn new() -> Self {
         Self {
             transitions: Vec::new(),
-            kind: NodeType::Rejecting,
         }
     }
 }
@@ -97,16 +89,21 @@ impl Nfa {
         Ok(())
     }
 }
+#[derive(Debug)]
 pub struct Context {
     nodes: HashSet<NodePointer>,
 }
 
 impl Context {
-    fn new(nodes: HashSet<NodePointer>) -> Self {
+    pub fn new(nodes: HashSet<NodePointer>) -> Self {
         Self { nodes }
     }
 
-    fn step(&self, nfa: Nfa, input: Atom) -> Self {
+    pub fn contains(&self, i: &NodePointer) -> bool {
+        return self.nodes.contains(i)
+    }
+
+    pub fn step(&self, nfa: &Nfa, input: Atom) -> Self {
         let mut nodes = HashSet::new();
         for nodeptr in &self.nodes {
             if let Some(node) = nfa.get(nodeptr) {
@@ -119,6 +116,11 @@ impl Context {
                 }
             }
         }
+        Self::add_epsilons(nodes, nfa)
+    }
+
+    pub fn add_epsilons(nodes: HashSet<NodePointer>, nfa: &Nfa) -> Self {
+        let mut nodes = nodes;
         loop {
             let prev = nodes.clone();
             let size = nodes.len();
@@ -155,14 +157,13 @@ fn test_nfa_alpha_transition() -> Result<(), Box<dyn Error>> {
     let b = nfa.add_node(Node::new());
     nfa.add_transition_alpha(&a, &b, 'a')?;
     let ctx = Context::new(vec![a].into_iter().collect());
-    let ctx2 = ctx.step(nfa.clone(), 'b');
+    let ctx2 = ctx.step(&nfa, 'b');
     assert_eq!(ctx2.nodes.len(), 0);
-    let ctx2 = ctx.step(nfa, 'a');
+    let ctx2 = ctx.step(&nfa, 'a');
     assert_eq!(ctx2.nodes.len(), 1);
     assert!(ctx2.nodes.contains(&b));
     Ok(())
 }
-
 
 #[test]
 fn test_nfa_epsilon_transition() -> Result<(), Box<dyn Error>> {
@@ -173,12 +174,11 @@ fn test_nfa_epsilon_transition() -> Result<(), Box<dyn Error>> {
     nfa.add_transition_alpha(&a, &b, 'a')?;
     nfa.add_transition_epsilon(&b, &c)?;
     let ctx = Context::new(vec![a].into_iter().collect());
-    let ctx2 = ctx.step(nfa.clone(), 'b');
+    let ctx2 = ctx.step(&nfa, 'b');
     assert_eq!(ctx2.nodes.len(), 0);
-    let ctx2 = ctx.step(nfa, 'a');
+    let ctx2 = ctx.step(&nfa, 'a');
     assert_eq!(ctx2.nodes.len(), 2);
     assert!(ctx2.nodes.contains(&b));
     assert!(ctx2.nodes.contains(&c));
     Ok(())
 }
-
