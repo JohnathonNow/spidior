@@ -1,4 +1,4 @@
-use std::fs;
+use std::{error::Error, fs};
 use walkdir::WalkDir;
 use clap::Clap;
 #[macro_use] extern crate lalrpop_util;
@@ -8,6 +8,7 @@ mod languages;
 mod editing;
 mod nfa;
 mod regex2nfa;
+mod matcher;
 
 use languages::clike::Clike;
 use languages::parsing::{Functions, Identifiers};
@@ -25,15 +26,9 @@ struct Opts {
 }
 
 
-fn main() -> Result<(), ()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let opts: Opts = Opts::parse();
-    match regexparser::parse(&opts.query) {
-        Ok(replace) => {
-            println!("Query parsed successfully {:?}", replace);
-            println!("Regex: {:?}", regex2nfa::build_nfa(replace.find));
-        },
-        Err(e) => println!("Could not parse query {:?}", e),
-    }
+    let replace = regexparser::parse(&opts.query)?;
     
     for entry in WalkDir::new(opts.path)
         .follow_links(true)
@@ -49,6 +44,7 @@ fn main() -> Result<(), ()> {
                 let clike = Clike { };
                 println!("{:?}\n", clike.read_functions(&contents));
                 println!("{:?}\n", clike.read_identifiers(&contents));
+                println!("{} matches", matcher::find(&contents, replace.find.clone()).len());
             }
         }
     }

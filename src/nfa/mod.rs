@@ -89,7 +89,7 @@ impl Nfa {
         Ok(())
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context {
     nodes: HashSet<NodePointer>,
 }

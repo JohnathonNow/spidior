@@ -19,46 +19,46 @@
 //!<set-item> 	::= 	<range> | <char>
 //!<query-items>        ::=         <query> | <query> <query-items>
 //!<range> 	::= 	<char> "-" <char>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Union {
     O(Box<Regex>, Box<Simple>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Regex {
     Union(Box<Union>),
     Simple(Box<Simple>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Simple {
     Concatenation(Box<Concatenation>),
     Basic(Box<Basic>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Concatenation {
     O(Box<Simple>, Box<Basic>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Basic {
     Star(Box<Star>),
     Plus(Box<Plus>),
     Elementary(Box<Elementary>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Star {
     O(Box<Elementary>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Plus {
     O(Box<Elementary>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Elementary {
     Group(Box<Group>),
     Any(Box<Any>),
@@ -67,90 +67,90 @@ pub enum Elementary {
     Set(Box<Set>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Group {
     O(Box<Regex>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Any {
     O
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Eos {
     O
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Char {
     Char(char),
     Meta(char),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Set {
     Positive(Box<Positive>),
     Negative(Box<Negative>),
     QuerySet(Box<QuerySet>,)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Positive {
     O(Box<Items>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Negative {
     O(Box<Items>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum QuerySet {
     O(Box<Items>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Items {
     Item(Box<Item>),
     Items(Box<Item>, Box<Items>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Item {
     Range(Box<Range>),
     Char(Box<Char>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Range {
     O(Box<Char>, Box<Char>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Queries {
     Query(Box<Query>),
     Queries(Box<Query>, Box<Queries>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Query {
     Kv(String, String),
     Fun
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Location {
     Path(String),
     All
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ReplaceItem {
     String(String),
     BackRef(i32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Replace {
     pub find: Box<Regex>,
     pub replace: Box<Replacement>,
@@ -158,7 +158,7 @@ pub struct Replace {
     pub location: Box<Location>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReplaceUnparsed {
     pub find: String,
     pub replace: String,
@@ -167,7 +167,7 @@ pub struct ReplaceUnparsed {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Replacement {
     pub replacements: Vec<ReplaceItem>
 }

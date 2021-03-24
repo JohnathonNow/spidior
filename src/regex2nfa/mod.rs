@@ -1,15 +1,14 @@
 //! This module is for building an `nfa::Nfa` from a
 //! a `regexparser::ast::Regex`
-use std::error::Error;
 
-use crate::{nfa::{Context, NodePointer}, regexparser};
+use crate::nfa::NodePointer;
 
 use super::nfa::Nfa;
 use super::regexparser::ast::*;
 
 pub fn build_nfa(r: Box<Regex>) -> (Nfa, NodePointer, NodePointer) {
     let mut nfa = Nfa::new(Vec::new());
-    let (s, d) =do_regex(r, &mut nfa);
+    let (s, d) = do_regex(r, &mut nfa);
     (nfa, s, d)
 }
 
@@ -51,7 +50,7 @@ fn do_basic(r: Box<Basic>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
 fn do_concat(r: Box<Concatenation>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Concatenation::O(x, y) = *r;
     let (ls, ld) = do_simple(x, nfa);
-    let (rs,rd) = do_basic(y, nfa);
+    let (rs, rd) = do_basic(y, nfa);
     nfa.add_transition_epsilon(&ld, &rs).unwrap();
     (ls, rd)
 }
@@ -69,7 +68,7 @@ fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
 fn do_star(r: Box<Star>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Star::O(r) = *r;
     let (src, dst) = do_elem(r, nfa);
-    nfa.add_transition_epsilon(&dst,&src).unwrap();
+    nfa.add_transition_epsilon(&dst, &src).unwrap();
     (src, dst)
 }
 
@@ -89,7 +88,9 @@ fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
 }
 
 #[test]
-fn test_regex() -> Result<(), Box<dyn Error>> {
+fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
+    use crate::{nfa::Context, regexparser};
+
     let regex = regexparser::parse("%s/bob|joe|e*//g")?;
     let (nfa, start, end) = build_nfa(regex.find);
     let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
