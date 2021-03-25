@@ -1,4 +1,4 @@
-use self::ast::Replace;
+use self::ast::{Items, Replace};
 use std::error::Error;
 
 pub mod ast;
@@ -44,6 +44,10 @@ pub fn parse(text: &str) -> Result<ast::Replace, Box<dyn Error>> {
         replace: Box::new(replace),
         global: ru.global,
     })
+}
+
+pub fn parse_set(s: String) -> Box<Items> {
+    set::ItemsParser::new().parse(&s).unwrap()
 }
 
 #[test]

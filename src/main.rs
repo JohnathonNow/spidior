@@ -9,8 +9,6 @@ mod editing;
 mod nfa;
 mod regex2nfa;
 
-use languages::clike::Clike;
-use languages::parsing::{Functions, Identifiers};
 
 
 

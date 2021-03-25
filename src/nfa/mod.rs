@@ -12,6 +12,9 @@ pub mod replacer;
 enum TransitionType {
     Epsilon,
     Alpha(Atom),
+    Range(String),
+    NegativeRange(String),
+    QuerySetRange(String),
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +72,33 @@ impl Nfa {
         NodePointer::new(self.nodes.len() - 1)
     }
 
+    pub fn add_transition_range(
+        &mut self,
+        from: &NodePointer,
+        to: &NodePointer,
+        s: String,
+    ) -> Result<(), Box<dyn Error>> {
+        self.add_transition(from, Transition::new(TransitionType::Range(s), *to))
+    }
+
+    pub fn add_transition_queryset(
+        &mut self,
+        from: &NodePointer,
+        to: &NodePointer,
+        s: String,
+    ) -> Result<(), Box<dyn Error>> {
+        self.add_transition(from, Transition::new(TransitionType::QuerySetRange(s), *to))
+    }
+
+    pub fn add_transition_negativerange(
+        &mut self,
+        from: &NodePointer,
+        to: &NodePointer,
+        s: String,
+    ) -> Result<(), Box<dyn Error>> {
+        self.add_transition(from, Transition::new(TransitionType::NegativeRange(s), *to))
+    }
+
     pub fn add_transition_alpha(
         &mut self,
         from: &NodePointer,
@@ -103,7 +133,7 @@ impl Context {
     }
 
     pub fn contains(&self, i: &NodePointer) -> bool {
-        return self.nodes.contains(i)
+        return self.nodes.contains(i);
     }
 
     pub fn step(&self, nfa: &Nfa, input: Atom) -> Self {
@@ -111,10 +141,17 @@ impl Context {
         for nodeptr in &self.nodes {
             if let Some(node) = nfa.get(nodeptr) {
                 for t in &node.transitions {
-                    if let TransitionType::Alpha(c) = t.kind {
-                        if c == input {
+                    match &t.kind {
+                        TransitionType::Alpha(c) if *c == input => {
                             nodes.insert(t.dest);
                         }
+                        TransitionType::Range(s) if s.contains(input) => {
+                            nodes.insert(t.dest);
+                        }
+                        TransitionType::NegativeRange(s) if !s.contains(input) => {
+                            nodes.insert(t.dest);
+                        }
+                        _ => {}
                     }
                 }
             }

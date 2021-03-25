@@ -1,7 +1,7 @@
 //! This module is for building an `nfa::Nfa` from a
 //! a `regexparser::ast::Regex`
 
-use crate::nfa::NodePointer;
+use crate::{nfa::NodePointer, regexparser::parse_set};
 
 use super::nfa::Nfa;
 use super::regexparser::ast::*;
@@ -61,7 +61,7 @@ fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
         Elementary::Any(_) => unimplemented!(),
         Elementary::Eos(_) => unimplemented!(),
         Elementary::Char(r) => do_char(r, nfa),
-        Elementary::Set(_) => unimplemented!(),
+        Elementary::Set(r) => do_set(r, nfa),
     }
 }
 
@@ -90,6 +90,83 @@ fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     };
     nfa.add_transition_alpha(&src, &dst, c).unwrap();
     (src, dst)
+}
+
+fn do_set(r: Box<Set>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    match *r {
+        Set::Positive(r) => do_positive(r, nfa),
+        Set::Negative(r) => do_negative(r, nfa),
+        Set::QuerySet(r) => do_queryset(r, nfa),
+    }
+}
+
+fn do_queryset(r: Box<QuerySet>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let QuerySet::O(r) = *r;
+    let r = parse_set(get_string(r));
+    let src = nfa.new_node();
+    let dst = nfa.new_node();
+    nfa.add_transition_queryset(&src, &dst, get_string(r)).unwrap();
+    (src, dst)
+}
+
+fn do_negative(r: Box<Negative>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let Negative::O(r) = *r;
+    let r = parse_set(get_string(r));
+    let src = nfa.new_node();
+    let dst = nfa.new_node();
+    nfa.add_transition_negativerange(&src, &dst, get_string(r)).unwrap();
+    (src, dst)
+}
+
+fn do_positive(r: Box<Positive>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let Positive::O(r) = *r;
+    let r = parse_set(get_string(r));
+    let src = nfa.new_node();
+    let dst = nfa.new_node();
+    nfa.add_transition_range(&src, &dst, get_string(r)).unwrap();
+    (src, dst)
+}
+
+fn get_string(r: Box<Items>) -> String {
+    let mut s = String::new();
+    for item in get_items(r) {
+        match *item {
+            Item::Range(r) => {
+                let Range::O(a, b) = *r;
+                for c in get_char(a)..=get_char(b) {
+                    s.push(c);
+                }
+            }
+            Item::Char(c) => {
+                s.push(get_char(c));
+            }
+        }
+    }
+    s
+}
+
+fn get_char(r: Box<Char>) -> char {
+    match *r {
+        Char::Char(c) => c,
+        Char::Meta(c) => c,
+    }
+}
+
+fn get_items(r: Box<Items>) -> Vec<Box<Item>> {
+    let mut r = r;
+    let mut v = Vec::new();
+    loop {
+        match *r {
+            Items::Item(i) => {
+                v.push(i);
+                return v;
+            }
+            Items::Items(i, nr) => {
+                v.push(i);
+                r = nr;
+            }
+        }
+    }
 }
 
 #[test]
@@ -123,5 +200,5 @@ fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
 
 fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Group::O(r) = *r;
-    do_regex(r, nfa) 
+    do_regex(r, nfa)
 }
