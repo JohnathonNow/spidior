@@ -57,7 +57,7 @@ fn do_concat(r: Box<Concatenation>, nfa: &mut Nfa) -> (NodePointer, NodePointer)
 
 fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
-        Elementary::Group(_) => unimplemented!(),
+        Elementary::Group(r) => do_group(r, nfa),
         Elementary::Any(_) => unimplemented!(),
         Elementary::Eos(_) => unimplemented!(),
         Elementary::Char(r) => do_char(r, nfa),
@@ -114,4 +114,9 @@ fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
     }
     assert!(ctx.contains(&end));
     Ok(())
+}
+
+fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let Group::O(r) = *r;
+    do_regex(r, nfa) 
 }
