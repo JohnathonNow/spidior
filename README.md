@@ -25,6 +25,7 @@ ARGS:
 
 FLAGS:
     -h, --help       Prints help information
+    -i, --in-place    Whether we should edit files in place or print to stdout
     -V, --version    Prints version information
 
 OPTIONS:
