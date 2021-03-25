@@ -31,6 +31,5 @@ OPTIONS:
     -p, --path <path>    The path to the files we are reading [default: .]
 ```
 
-Note that right now the program isn't complete. Currently, the query is ignored,
-but the analysis of found programs is printed out - including identifier usage and
-function declarations.
+Note that right now the program isn't complete. Currently, the query only supports
+basic regex searches and plaintext replacement strings.

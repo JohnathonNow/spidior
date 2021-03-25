@@ -22,6 +22,9 @@ struct Opts {
     path: String,
     /// The query string for find/replace for each file we find in the input
     query: String,
+    /// Whether we should edit files in place or print to stdout
+    #[clap(short, long)]
+    in_place: bool,
 }
 
 
@@ -37,13 +40,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         let path = entry.path();
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
-
                 let f_name = entry.file_name().to_string_lossy();
+                let res = nfa::replacer::replace(&contents, replace.clone())?;
                 println!("Parsing file {}", f_name);
-                let clike = Clike { };
-                println!("{:?}\n", clike.read_functions(&contents));
-                println!("{:?}\n", clike.read_identifiers(&contents));
-                println!("{} matches", nfa::matcher::find(&contents, replace.find.clone()).len());
+                if opts.in_place {
+                    fs::write(path, &res)?;
+                } else {
+                    println!("{}", res);
+                }
             }
         }
     }
