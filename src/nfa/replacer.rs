@@ -66,5 +66,11 @@ fn test_replace() -> Result<(), Box<dyn std::error::Error>> {
 
     let regex = regexparser::parse("%s/(joe)*/bob/g")?;
     assert_eq!(replace(&"eee".into(), regex)?, "eee");
+
+    let regex = regexparser::parse("%s/jo*e/bob/g")?;
+    assert_eq!(replace(&"jejoejooeej".into(), regex)?, "bobbobbobej");
+
+    let regex = regexparser::parse("%s/jo+e/bob/g")?;
+    assert_eq!(replace(&"jejoejooeej".into(), regex)?, "jebobbobej");
     Ok(())
 }

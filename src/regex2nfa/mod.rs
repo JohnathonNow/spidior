@@ -69,11 +69,16 @@ fn do_star(r: Box<Star>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Star::O(r) = *r;
     let (src, dst) = do_elem(r, nfa);
     nfa.add_transition_epsilon(&dst, &src).unwrap();
+    nfa.add_transition_epsilon(&src, &dst).unwrap();
+
     (src, dst)
 }
 
-fn do_plus(_r: Box<Plus>, _nfa: &mut Nfa) -> (NodePointer, NodePointer) {
-    unimplemented!();
+fn do_plus(r: Box<Plus>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let Plus::O(r) = *r;
+    let (src, dst) = do_elem(r, nfa);
+    nfa.add_transition_epsilon(&dst, &src).unwrap();
+    (src, dst)
 }
 
 fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
