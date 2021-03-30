@@ -1,7 +1,11 @@
 //! This module is for constructing and executing
 //! Nondeterministic Finite Automata
 
-use std::{collections::HashSet, error::Error, hash::Hash};
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+    hash::Hash,
+};
 
 type Atom = char;
 
@@ -15,6 +19,8 @@ enum TransitionType {
     Range(String),
     NegativeRange(String),
     QuerySetRange(String),
+    Open(u32),
+    Close(u32),
 }
 
 #[derive(Debug, Clone)]
@@ -49,6 +55,7 @@ impl Node {
         }
     }
 }
+
 #[derive(Debug, Clone)]
 pub struct Nfa {
     nodes: Vec<Node>,
@@ -116,6 +123,24 @@ impl Nfa {
         self.add_transition(from, Transition::new(TransitionType::Epsilon, *to))
     }
 
+    pub fn add_group(
+        &mut self,
+        start_from: &NodePointer,
+        start_to: &NodePointer,
+        end_from: &NodePointer,
+        end_to: &NodePointer,
+        num: u32,
+    ) -> Result<(), Box<dyn Error>> {
+        self.add_transition(
+            start_from,
+            Transition::new(TransitionType::Open(num), *start_to),
+        )?;
+        self.add_transition(
+            end_from,
+            Transition::new(TransitionType::Close(num), *end_to),
+        )
+    }
+
     fn add_transition(&mut self, from: &NodePointer, to: Transition) -> Result<(), Box<dyn Error>> {
         let node = self.nodes.get_mut(from.id).ok_or("Invalid source!")?;
         node.transitions.push(to);
@@ -180,6 +205,64 @@ impl Context {
     }
 }
 
+#[derive(Debug)]
+pub struct NfaModel {
+    nfa: Nfa,
+    start: NodePointer,
+    end: NodePointer,
+}
+
+impl NfaModel {
+    pub fn to_dfa(&self) -> Result<Self, Box<dyn Error>> {
+        let mut dfa = Nfa::new(Vec::new());
+        let mut map = HashMap::new();
+        let mut stack = Vec::new();
+        let start = dfa.new_node();
+        let end = dfa.new_node();
+        let mut dfa_model = Self::new(dfa, start, end);
+        let ctx = Context::add_epsilons(vec![start].into_iter().collect(), &dfa_model.nfa);
+        let x: Vec<NodePointer> = ctx.nodes.into_iter().collect();
+        map.insert(x.clone(), dfa_model.start);
+        stack.push(x);
+        while !stack.is_empty() {
+            let x = stack.pop().ok_or("sad")?;
+            let my_p = *map.get(&x).ok_or("how?")?;
+
+            for old in &x {
+                for new in &self.nfa.get(&old).ok_or("ahh")?.transitions {
+                    if let TransitionType::Epsilon = new.kind {
+                    } else {
+                        let ctx = Context::add_epsilons(
+                            vec![new.dest].into_iter().collect(),
+                            &dfa_model.nfa,
+                        );
+                        println!("{:?}", ctx);
+                        let super_state: Vec<NodePointer> = ctx.nodes.into_iter().collect();
+                        let d = if let Some(new_p) = map.get(&super_state) {
+                            *new_p
+                        } else {
+                            let y = dfa_model.nfa.new_node();
+                            map.insert(super_state.clone(), y);
+                            stack.push(super_state);
+                            y
+                        };
+                        let t = Transition::new(new.kind.clone(), d);
+
+                        dfa_model.nfa.add_transition(&my_p, t)?;
+                    }
+                }
+            }
+        }
+        Ok(dfa_model)
+    }
+}
+
+impl NfaModel {
+    pub fn new(nfa: Nfa, start: NodePointer, end: NodePointer) -> Self {
+        Self { nfa, start, end }
+    }
+}
+
 #[test]
 fn test_nfa_insert() -> Result<(), Box<dyn Error>> {
     let mut nfa = Nfa::new(Vec::new());
@@ -220,5 +303,18 @@ fn test_nfa_epsilon_transition() -> Result<(), Box<dyn Error>> {
     assert_eq!(ctx2.nodes.len(), 2);
     assert!(ctx2.nodes.contains(&b));
     assert!(ctx2.nodes.contains(&c));
+    Ok(())
+}
+
+#[test]
+fn test_nfa_to_dfa() -> Result<(), Box<dyn Error>> {
+    let mut nfa = Nfa::new(Vec::new());
+    let a = nfa.new_node();
+    let b = nfa.new_node();
+    let c = nfa.new_node();
+    nfa.add_transition_alpha(&a, &b, 'a')?;
+    nfa.add_transition_epsilon(&b, &c)?;
+    let a = NfaModel::new(nfa, a, c);
+    println!("{:?}", a.to_dfa());
     Ok(())
 }
