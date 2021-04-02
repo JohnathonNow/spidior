@@ -56,24 +56,53 @@ impl Node {
     }
 }
 
+/// Represents a non-deterministic finite automaton
 #[derive(Debug, Clone)]
 pub struct Nfa {
     nodes: Vec<Node>,
 }
 
 impl Nfa {
+    /// Creates a new NFA from a Vec of nodes.
+    /// This Vec can be empty, and then the `new_node` and
+    /// `add_node` methods can be used to add new nodes.
+    ///
+    /// Internally, nodes are tracked by NodePointers,
+    /// which simply index into the node vec from a given NFA.
     pub fn new(nodes: Vec<Node>) -> Self {
         Self { nodes }
     }
 
+    /// "Dereferences" a NodePointer in the context of an NFA.
+    ///
+    /// # Arguments
+    ///
+    /// * `i` - The node pointer we are dereferencing - note that
+    /// i should have been returned from `add_node` or `new_node`, or
+    /// sad things can occur.
+    ///
+    /// # Returns
+    /// An Option<&Node>, which will be None if i is not found within
+    /// the NFA, or Some(&x) where x is the node that was referenced.
     pub fn get(&self, i: &NodePointer) -> Option<&Node> {
         self.nodes.get(i.id)
     }
 
+    /// Creates a new Node in the NFA, with no transitions to/from it.
+    ///
+    /// # Returns
+    /// A NodePointer, which identifies the newly added Node.
     pub fn new_node(&mut self) -> NodePointer {
         self.add_node(Node::new())
     }
-
+    /// Adds a given Node to the NFA.
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The new Node we are adding.
+    ///
+    /// # Returns
+    /// An NodePointer, which identifies the newly added Node.
     pub fn add_node(&mut self, node: Node) -> NodePointer {
         self.nodes.push(node);
         NodePointer::new(self.nodes.len() - 1)
