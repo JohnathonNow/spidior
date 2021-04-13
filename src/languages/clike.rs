@@ -190,7 +190,7 @@ impl Identifiers for Clike {
 }
 
 #[test]
-fn functions() {
+fn test_functions() {
     let expected = "[Function { name: \"LightningOvercharge\" }, Function { name: \"getAction\" }, Function { name: \"onSpawn\" }, Function { name: \"getPassiveAction\" }, Function { name: \"getCost\" }, Function { name: \"getName\" }, Function { name: \"getTip\" }, Function { name: \"getActionNetwork\" }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let clike = Clike {};
@@ -201,7 +201,7 @@ fn functions() {
 }
 
 #[test]
-fn identifiers() {
+fn test_identifiers() {
     let expected = "[Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("resources/test/identifiers.java");
@@ -211,4 +211,22 @@ fn identifiers() {
     assert_eq!(result, expected);
     assert!(Clike::is_allowed("bob"));
     assert!(!Clike::is_allowed("private"));
+}
+
+#[test]
+fn test_replace_whole() {
+    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("resources/test/identifiers.java");
+    let text = std::fs::read_to_string(d).unwrap();
+    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("resources/test/identifiers_replaced.java");
+    let expected = std::fs::read_to_string(d).unwrap();
+    assert_eq!(
+        crate::nfa::replacer::replace(
+            &text,
+            crate::regexparser::parse("%s/[[type=double,name=number]]/flag/g").unwrap()
+        )
+        .unwrap(),
+        expected
+    );
 }
