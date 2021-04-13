@@ -147,7 +147,7 @@ pub enum Location {
 #[derive(Debug, Clone)]
 pub enum ReplaceItem {
     String(String),
-    BackRef(i32),
+    BackRef(usize),
 }
 
 #[derive(Debug, Clone)]

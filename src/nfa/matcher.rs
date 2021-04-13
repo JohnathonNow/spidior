@@ -1,11 +1,9 @@
+use std::collections::HashSet;
+
 use crate::nfa::Context;
 use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
-pub struct Group {
-    _start: usize,
-    _len: usize,
-    _str: String,
-}
+use crate::nfa::Group;
 pub struct Match {
     start: usize,
     len: usize,
@@ -28,12 +26,21 @@ impl Match {
     pub fn len(&self) -> usize {
         self.len
     }
+
+    pub fn get_group(&self, i: usize, s: &String) -> String {
+        if let Some(x) = self._groups.get(i) {
+            s[x.start..x.start+x.len].to_string()
+        } else {
+            "".to_string()
+        }
+    }
 }
 
 pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let (nfa, start, end) = build_nfa(regex);
-    let ctx0 = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx0 = Context::new(HashSet::new());
+    ctx0.add_epsilons(vec![start].into_iter().collect(), &nfa);
     let mut is = 0;
     while is < input.len() {
         let mut new = None;
@@ -41,9 +48,9 @@ pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
         let mut il = 0;
         for c in input.chars().skip(is) {
             il += 1;
-            ctx = ctx.step(&nfa, c);
+            ctx.step(&nfa, c);
             if ctx.contains(&end) {
-                new = Some(Match::new(is, il, Vec::new()));
+                new = Some(Match::new(is, il, ctx.groups.clone()));
             }
         }
         if let Some(x) = new {

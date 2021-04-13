@@ -1,6 +1,8 @@
 //! This module is for building an `nfa::Nfa` from a
 //! a `regexparser::ast::Regex`
 
+use std::collections::HashSet;
+
 use crate::{nfa::NodePointer, regexparser::parse_set};
 
 use super::nfa::Nfa;
@@ -169,36 +171,46 @@ fn get_items(r: Box<Items>) -> Vec<Box<Item>> {
     }
 }
 
+
+fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let Group::O(r) = *r;
+    let src = nfa.new_node();
+    let dst = nfa.new_node();
+    let x = do_regex(r, nfa);
+    nfa.add_group(&src, &x.0, &x.1, &dst).unwrap();
+    (src, dst)
+}
+
+
 #[test]
 fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
     use crate::{nfa::Context, regexparser};
 
     let regex = regexparser::parse("%s/bob|joe|e*//g")?;
     let (nfa, start, end) = build_nfa(regex.find);
-    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx = Context::new(HashSet::new());
+    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bob".chars() {
-        ctx = ctx.step(&nfa, c);
+        ctx.step(&nfa, c);
     }
     assert!(ctx.contains(&end));
-    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx = Context::new(HashSet::new());
+    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bobd".chars() {
-        ctx = ctx.step(&nfa, c);
+        ctx.step(&nfa, c);
     }
     assert!(!ctx.contains(&end));
-    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx = Context::new(HashSet::new());
+    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bo".chars() {
-        ctx = ctx.step(&nfa, c);
+        ctx.step(&nfa, c);
     }
     assert!(!ctx.contains(&end));
-    let mut ctx = Context::add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx = Context::new(HashSet::new());
+    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "eeeeeeeeee".chars() {
-        ctx = ctx.step(&nfa, c);
+        ctx.step(&nfa, c);
     }
     assert!(ctx.contains(&end));
     Ok(())
-}
-
-fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
-    let Group::O(r) = *r;
-    do_regex(r, nfa)
 }

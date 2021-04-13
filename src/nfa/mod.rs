@@ -19,8 +19,8 @@ enum TransitionType {
     Range(String),
     NegativeRange(String),
     QuerySetRange(String),
-    Open(u32),
-    Close(u32),
+    Open(usize),
+    Close(usize),
 }
 
 #[derive(Debug, Clone)]
@@ -60,6 +60,7 @@ impl Node {
 #[derive(Debug, Clone)]
 pub struct Nfa {
     nodes: Vec<Node>,
+    index: usize,
 }
 
 impl Nfa {
@@ -70,7 +71,7 @@ impl Nfa {
     /// Internally, nodes are tracked by NodePointers,
     /// which simply index into the node vec from a given NFA.
     pub fn new(nodes: Vec<Node>) -> Self {
-        Self { nodes }
+        Self { nodes, index: 0 }
     }
 
     /// "Dereferences" a NodePointer in the context of an NFA.
@@ -158,15 +159,15 @@ impl Nfa {
         start_to: &NodePointer,
         end_from: &NodePointer,
         end_to: &NodePointer,
-        num: u32,
     ) -> Result<(), Box<dyn Error>> {
+        self.index += 1;
         self.add_transition(
             start_from,
-            Transition::new(TransitionType::Open(num), *start_to),
+            Transition::new(TransitionType::Open(self.index), *start_to),
         )?;
         self.add_transition(
             end_from,
-            Transition::new(TransitionType::Close(num), *end_to),
+            Transition::new(TransitionType::Close(self.index), *end_to),
         )
     }
 
@@ -176,21 +177,49 @@ impl Nfa {
         Ok(())
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Group {
+    pub start: usize,
+    pub len: usize,
+}
+
 #[derive(Debug, Clone)]
 pub struct Context {
     nodes: HashSet<NodePointer>,
+    groups: Vec<Group>,
+    index: usize,
 }
 
 impl Context {
     pub fn new(nodes: HashSet<NodePointer>) -> Self {
-        Self { nodes }
+        Self {
+            nodes,
+            groups: Vec::new(),
+            index: 0,
+        }
     }
 
     pub fn contains(&self, i: &NodePointer) -> bool {
         return self.nodes.contains(i);
     }
 
-    pub fn step(&self, nfa: &Nfa, input: Atom) -> Self {
+    fn open(&mut self, i: usize) {
+        while i >= self.groups.len() {
+            self.groups.push(Group { start: 0, len: 0 });
+        }
+        self.groups.get_mut(i).unwrap().start = self.index;
+    }
+
+    fn close(&mut self, i: usize) {
+        while i >= self.groups.len() {
+            self.groups.push(Group { start: 0, len: 0 });
+        }
+        let t = self.groups.get_mut(i).unwrap();
+        t.len = self.index - t.start;
+    }
+
+    pub fn step(&mut self, nfa: &Nfa, input: Atom) {
         let mut nodes = HashSet::new();
         for nodeptr in &self.nodes {
             if let Some(node) = nfa.get(nodeptr) {
@@ -210,10 +239,11 @@ impl Context {
                 }
             }
         }
-        Self::add_epsilons(nodes, nfa)
+        self.index += 1;
+        self.add_epsilons(nodes, nfa)
     }
 
-    pub fn add_epsilons(nodes: HashSet<NodePointer>, nfa: &Nfa) -> Self {
+    pub fn add_epsilons(&mut self, nodes: HashSet<NodePointer>, nfa: &Nfa) {
         let mut nodes = nodes;
         loop {
             let prev = nodes.clone();
@@ -223,12 +253,19 @@ impl Context {
                     for t in &node.transitions {
                         if let TransitionType::Epsilon = t.kind {
                             nodes.insert(t.dest);
+                        } else if let TransitionType::Open(s) = t.kind {
+                            nodes.insert(t.dest);
+                            self.open(s);
+                        } else if let TransitionType::Close(s) = t.kind {
+                            nodes.insert(t.dest);
+                            self.close(s);
                         }
                     }
                 }
             }
             if size == nodes.len() {
-                return Self::new(nodes);
+                self.nodes = nodes;
+                return;
             }
         }
     }
@@ -249,7 +286,8 @@ impl NfaModel {
         let start = dfa.new_node();
         let end = dfa.new_node();
         let mut dfa_model = Self::new(dfa, start, end);
-        let ctx = Context::add_epsilons(vec![start].into_iter().collect(), &dfa_model.nfa);
+        let mut ctx = Context::new(HashSet::new());
+        ctx.add_epsilons(vec![start].into_iter().collect(), &dfa_model.nfa);
         let x: Vec<NodePointer> = ctx.nodes.into_iter().collect();
         map.insert(x.clone(), dfa_model.start);
         stack.push(x);
@@ -261,10 +299,8 @@ impl NfaModel {
                 for new in &self.nfa.get(&old).ok_or("ahh")?.transitions {
                     if let TransitionType::Epsilon = new.kind {
                     } else {
-                        let ctx = Context::add_epsilons(
-                            vec![new.dest].into_iter().collect(),
-                            &dfa_model.nfa,
-                        );
+                        let mut ctx = Context::new(HashSet::new());
+                        ctx.add_epsilons(vec![new.dest].into_iter().collect(), &dfa_model.nfa);
                         println!("{:?}", ctx);
                         let super_state: Vec<NodePointer> = ctx.nodes.into_iter().collect();
                         let d = if let Some(new_p) = map.get(&super_state) {
@@ -308,12 +344,13 @@ fn test_nfa_alpha_transition() -> Result<(), Box<dyn Error>> {
     let a = nfa.add_node(Node::new());
     let b = nfa.add_node(Node::new());
     nfa.add_transition_alpha(&a, &b, 'a')?;
-    let ctx = Context::new(vec![a].into_iter().collect());
-    let ctx2 = ctx.step(&nfa, 'b');
-    assert_eq!(ctx2.nodes.len(), 0);
-    let ctx2 = ctx.step(&nfa, 'a');
-    assert_eq!(ctx2.nodes.len(), 1);
-    assert!(ctx2.nodes.contains(&b));
+    let mut ctx = Context::new(vec![a].into_iter().collect());
+    ctx.step(&nfa, 'b');
+    assert_eq!(ctx.nodes.len(), 0);
+    let mut ctx = Context::new(vec![a].into_iter().collect());
+    ctx.step(&nfa, 'a');
+    assert_eq!(ctx.nodes.len(), 1);
+    assert!(ctx.nodes.contains(&b));
     Ok(())
 }
 
@@ -325,13 +362,14 @@ fn test_nfa_epsilon_transition() -> Result<(), Box<dyn Error>> {
     let c = nfa.new_node();
     nfa.add_transition_alpha(&a, &b, 'a')?;
     nfa.add_transition_epsilon(&b, &c)?;
-    let ctx = Context::new(vec![a].into_iter().collect());
-    let ctx2 = ctx.step(&nfa, 'b');
-    assert_eq!(ctx2.nodes.len(), 0);
-    let ctx2 = ctx.step(&nfa, 'a');
-    assert_eq!(ctx2.nodes.len(), 2);
-    assert!(ctx2.nodes.contains(&b));
-    assert!(ctx2.nodes.contains(&c));
+    let mut ctx = Context::new(vec![a].into_iter().collect());
+    ctx.step(&nfa, 'b');
+    assert_eq!(ctx.nodes.len(), 0);
+    let mut ctx = Context::new(vec![a].into_iter().collect());
+    ctx.step(&nfa, 'a');
+    assert_eq!(ctx.nodes.len(), 2);
+    assert!(ctx.nodes.contains(&b));
+    assert!(ctx.nodes.contains(&c));
     Ok(())
 }
 

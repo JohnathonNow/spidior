@@ -48,7 +48,7 @@ fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn 
         }
         if last != 0 {
             return Ok((
-                ReplaceItem::BackRef(text[start + 1..last+1].parse::<i32>()?),
+                ReplaceItem::BackRef(text[start + 1..last+1].parse::<usize>()?),
                 last + 1,
             ));
         }
