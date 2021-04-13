@@ -23,6 +23,7 @@ public class LightningOvercharge extends Lightning {
     public void onSpawn(Session me) {
         number = 1;
         me.x = 0;
+        Fake.me = 4;
     }
 }
 

@@ -77,7 +77,7 @@ public class LightningOvercharge extends Lightning {
     @Override
     public void onSpawn(Session sess) {
         number = 1;
-        me.x = 0;
+        sess.x = 0;
     }
 }
 ```
@@ -96,7 +96,7 @@ public class LightningOvercharge extends Lightning {
     @Override
     public void onSpawn(Session sess) {
         spawnFlag = 1;
-        me.x = 0;
+        sess.x = 0;
     }
 }
 ```

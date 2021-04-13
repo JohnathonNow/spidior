@@ -18,11 +18,12 @@ public class LightningOvercharge extends Lightning {
         charge = 0;
     }
 
-    double flag;
+    double number;
     @Override
-    public void onSpawn(Session me) {
-        flag = 1;
-        me.x = 0;
+    public void onSpawn(Session sess) {
+        number = 1;
+        sess.x = 0;
+        Fake.me = 4;
     }
 }
 

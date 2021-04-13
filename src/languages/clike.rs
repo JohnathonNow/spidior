@@ -100,6 +100,7 @@ enum IFsm {
     NAME1,
     SPACE,
     NAME2,
+    DOT,
 }
 
 impl Identifiers for Clike {
@@ -132,9 +133,16 @@ impl Identifiers for Clike {
             }
             match s {
                 IFsm::NONE => {
-                    if c.is_alphabetic() {
+                    if c == '.' {
+                        s = IFsm::DOT;
+                    } else if c.is_alphabetic() {
                         s = IFsm::NAME1;
                         n1s = i;
+                    }
+                }
+                IFsm::DOT => {
+                    if c.is_whitespace() {
+                        s = IFsm::SPACE;
                     }
                 }
                 IFsm::NAME1 => {
@@ -143,7 +151,11 @@ impl Identifiers for Clike {
                         n1e = i;
                     } else if !c.is_alphanumeric() {
                         //Push declared identifier
-                        s = IFsm::NONE;
+                        if c == '.' {
+                            s = IFsm::DOT;
+                        } else {
+                            s = IFsm::NONE;
+                        }
                         n1e = i;
                         let name = text[n1s..n1e].to_string();
                         for frame in stack.iter().rev() {
@@ -173,7 +185,11 @@ impl Identifiers for Clike {
                 IFsm::NAME2 => {
                     if !c.is_alphanumeric() {
                         //Push new delcaration
-                        s = IFsm::NONE;
+                        if c == '.' {
+                            s = IFsm::DOT;
+                        } else {
+                            s = IFsm::NONE;
+                        }
                         n2e = i;
                         let name = text[n2s..n2e].to_string();
                         let typ = text[n1s..n1e].to_string();
@@ -202,7 +218,7 @@ fn test_functions() {
 
 #[test]
 fn test_identifiers() {
-    let expected = "[Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
+    let expected = "[Identifier { name: \"com\", typ: \"static\", start: 67, end: 70 }, Identifier { name: \"com\", typ: \"static\", start: 232, end: 235 }, Identifier { name: \"com\", typ: \"static\", start: 273, end: 276 }, Identifier { name: \"com\", typ: \"static\", start: 316, end: 319 }, Identifier { name: \"com\", typ: \"static\", start: 361, end: 364 }, Identifier { name: \"LightningOvercharge\", typ: \"class\", start: 414, end: 433 }, Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("resources/test/identifiers.java");
     let clike = Clike {};
@@ -224,7 +240,7 @@ fn test_replace_whole() {
     assert_eq!(
         crate::nfa::replacer::replace(
             &text,
-            crate::regexparser::parse("%s/[[type=double,name=number]]/flag/g").unwrap()
+            crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap()
         )
         .unwrap(),
         expected
