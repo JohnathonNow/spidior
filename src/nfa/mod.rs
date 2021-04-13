@@ -7,10 +7,13 @@ use std::{
     hash::Hash,
 };
 
+use queryengine::QueryEngine;
+
 type Atom = char;
 
 pub mod matcher;
 pub mod replacer;
+pub mod queryengine;
 
 #[derive(Debug, Clone)]
 enum TransitionType {
@@ -219,7 +222,7 @@ impl Context {
         t.len = self.index - t.start;
     }
 
-    pub fn step(&mut self, nfa: &Nfa, input: Atom) {
+    pub fn step(&mut self, nfa: &Nfa, input: Atom, q: &queryengine::QueryEngine) -> usize {
         let mut nodes = HashSet::new();
         for nodeptr in &self.nodes {
             if let Some(node) = nfa.get(nodeptr) {
@@ -234,13 +237,21 @@ impl Context {
                         TransitionType::NegativeRange(s) if !s.contains(input) => {
                             nodes.insert(t.dest);
                         }
+                        TransitionType::QuerySetRange(s) => {
+                            if let Some(x) = q.query(self.index, s) {
+                                println!("{}", self.index);
+                                self.index = x - 1;
+                                nodes.insert(t.dest);
+                            }
+                        }
                         _ => {}
                     }
                 }
             }
         }
         self.index += 1;
-        self.add_epsilons(nodes, nfa)
+        self.add_epsilons(nodes, nfa);
+        self.index
     }
 
     pub fn add_epsilons(&mut self, nodes: HashSet<NodePointer>, nfa: &Nfa) {
@@ -345,10 +356,10 @@ fn test_nfa_alpha_transition() -> Result<(), Box<dyn Error>> {
     let b = nfa.add_node(Node::new());
     nfa.add_transition_alpha(&a, &b, 'a')?;
     let mut ctx = Context::new(vec![a].into_iter().collect());
-    ctx.step(&nfa, 'b');
+    ctx.step(&nfa, 'b', &QueryEngine::new());
     assert_eq!(ctx.nodes.len(), 0);
     let mut ctx = Context::new(vec![a].into_iter().collect());
-    ctx.step(&nfa, 'a');
+    ctx.step(&nfa, 'a', &QueryEngine::new());
     assert_eq!(ctx.nodes.len(), 1);
     assert!(ctx.nodes.contains(&b));
     Ok(())
@@ -363,10 +374,10 @@ fn test_nfa_epsilon_transition() -> Result<(), Box<dyn Error>> {
     nfa.add_transition_alpha(&a, &b, 'a')?;
     nfa.add_transition_epsilon(&b, &c)?;
     let mut ctx = Context::new(vec![a].into_iter().collect());
-    ctx.step(&nfa, 'b');
+    ctx.step(&nfa, 'b', &QueryEngine::new());
     assert_eq!(ctx.nodes.len(), 0);
     let mut ctx = Context::new(vec![a].into_iter().collect());
-    ctx.step(&nfa, 'a');
+    ctx.step(&nfa, 'a', &QueryEngine::new());
     assert_eq!(ctx.nodes.len(), 2);
     assert!(ctx.nodes.contains(&b));
     assert!(ctx.nodes.contains(&c));

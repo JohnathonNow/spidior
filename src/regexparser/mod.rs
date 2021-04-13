@@ -7,7 +7,7 @@ mod parsereplacement;
 
 lalrpop_mod!(reg, "/regexparser/reg.rs");
 lalrpop_mod!(set, "/regexparser/set.rs");
-lalrpop_mod!(query, "/regexparser/query.rs");
+lalrpop_mod!(pub query, "/regexparser/query.rs");
 lalrpop_mod!(location, "/regexparser/location.rs");
 
 /// For parsing out statements of the form

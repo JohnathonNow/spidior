@@ -107,7 +107,8 @@ fn do_queryset(r: Box<QuerySet>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let r = parse_set(get_string(r));
     let src = nfa.new_node();
     let dst = nfa.new_node();
-    nfa.add_transition_queryset(&src, &dst, get_string(r)).unwrap();
+    nfa.add_transition_queryset(&src, &dst, get_string(r))
+        .unwrap();
     (src, dst)
 }
 
@@ -116,7 +117,8 @@ fn do_negative(r: Box<Negative>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let r = parse_set(get_string(r));
     let src = nfa.new_node();
     let dst = nfa.new_node();
-    nfa.add_transition_negativerange(&src, &dst, get_string(r)).unwrap();
+    nfa.add_transition_negativerange(&src, &dst, get_string(r))
+        .unwrap();
     (src, dst)
 }
 
@@ -171,7 +173,6 @@ fn get_items(r: Box<Items>) -> Vec<Box<Item>> {
     }
 }
 
-
 fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let Group::O(r) = *r;
     let src = nfa.new_node();
@@ -180,7 +181,6 @@ fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     nfa.add_group(&src, &x.0, &x.1, &dst).unwrap();
     (src, dst)
 }
-
 
 #[test]
 fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
@@ -191,25 +191,25 @@ fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
     let mut ctx = Context::new(HashSet::new());
     ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bob".chars() {
-        ctx.step(&nfa, c);
+        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
     }
     assert!(ctx.contains(&end));
     let mut ctx = Context::new(HashSet::new());
     ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bobd".chars() {
-        ctx.step(&nfa, c);
+        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
     }
     assert!(!ctx.contains(&end));
     let mut ctx = Context::new(HashSet::new());
     ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "bo".chars() {
-        ctx.step(&nfa, c);
+        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
     }
     assert!(!ctx.contains(&end));
     let mut ctx = Context::new(HashSet::new());
     ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
     for c in "eeeeeeeeee".chars() {
-        ctx.step(&nfa, c);
+        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
     }
     assert!(ctx.contains(&end));
     Ok(())

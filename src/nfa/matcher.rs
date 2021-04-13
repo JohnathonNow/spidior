@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 
+use crate::nfa::queryengine::QueryEngine;
 use crate::nfa::Context;
+use crate::nfa::Group;
 use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
-use crate::nfa::Group;
+use crate::languages::clike::Clike;
 pub struct Match {
     start: usize,
     len: usize,
@@ -29,7 +31,7 @@ impl Match {
 
     pub fn get_group(&self, i: usize, s: &String) -> String {
         if let Some(x) = self._groups.get(i) {
-            s[x.start..x.start+x.len].to_string()
+            s[x.start..x.start + x.len].to_string()
         } else {
             "".to_string()
         }
@@ -42,15 +44,17 @@ pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut ctx0 = Context::new(HashSet::new());
     ctx0.add_epsilons(vec![start].into_iter().collect(), &nfa);
     let mut is = 0;
+    let mut qe = QueryEngine::build(input, Box::new(Clike{}), Box::new(Clike{}));
     while is < input.len() {
         let mut new = None;
         let mut ctx = ctx0.clone();
-        let mut il = 0;
-        for c in input.chars().skip(is) {
-            il += 1;
-            ctx.step(&nfa, c);
+        let mut i = is;
+        while i < input.len() {
+            let c = input.chars().nth(i).unwrap();
+            qe.set_offset(is);
+            i = is + ctx.step(&nfa, c, &qe);
             if ctx.contains(&end) {
-                new = Some(Match::new(is, il, ctx.groups.clone()));
+                new = Some(Match::new(is, i - is, ctx.groups.clone()));
             }
         }
         if let Some(x) = new {
