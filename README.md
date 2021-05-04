@@ -1,6 +1,8 @@
 spidior
 =======
 
+`spidior` is a command line utility for performing `sed`-like substitutions on source code files that aims to augment regular expressions with semantic information parsed from the code it is operating on.
+
 Status
 ------
 ![Build Status](https://github.com/JohnathonNow/spidior/workflows/Rust/badge.svg)
