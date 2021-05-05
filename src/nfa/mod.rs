@@ -27,6 +27,15 @@ enum TransitionType {
 }
 
 #[derive(Debug, Clone)]
+
+enum NodeType {
+    Normal,
+    Open(usize),
+    Close(usize),
+    End,
+}
+
+#[derive(Debug, Clone)]
 struct Transition {
     kind: TransitionType,
     dest: NodePointer,
@@ -50,11 +59,27 @@ impl NodePointer {
 #[derive(Debug, Clone)]
 pub struct Node {
     transitions: Vec<Transition>,
+    nt: NodeType,
 }
 impl Node {
     pub fn new() -> Self {
         Self {
             transitions: Vec::new(),
+            nt: NodeType::Normal,
+        }
+    }
+    pub fn new_end() -> Self {
+        Self {
+            transitions: Vec::new(),
+            nt: NodeType::End,
+        }
+    }
+
+    pub fn is_end(&self) -> bool {
+        if let NodeType::End = self.nt {
+            true
+        } else {
+            false
         }
     }
 }
@@ -98,6 +123,14 @@ impl Nfa {
     /// A NodePointer, which identifies the newly added Node.
     pub fn new_node(&mut self) -> NodePointer {
         self.add_node(Node::new())
+    }
+
+    /// Creates a new end Node in the NFA, with no transitions to/from it.
+    ///
+    /// # Returns
+    /// A NodePointer, which identifies the newly added Node.
+    pub fn new_end(&mut self) -> NodePointer {
+        self.add_node(Node::new_end())
     }
     /// Adds a given Node to the NFA.
     ///
@@ -207,6 +240,17 @@ impl Context {
         return self.nodes.contains(i);
     }
 
+    pub fn is_end(&self, n: &Nfa) -> bool {
+        for i in &self.nodes {
+            if let Some(x) = n.get(i) {
+                if x.is_end() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     fn open(&mut self, i: usize) {
         while i >= self.groups.len() {
             self.groups.push(Group { start: 0, len: 0 });
@@ -298,7 +342,7 @@ impl NfaModel {
         let end = dfa.new_node();
         let mut dfa_model = Self::new(dfa, start, end);
         let mut ctx = Context::new(HashSet::new());
-        ctx.add_epsilons(vec![start].into_iter().collect(), &dfa_model.nfa);
+        ctx.add_epsilons(vec![self.start].into_iter().collect(), &self.nfa);
         let x: Vec<NodePointer> = ctx.nodes.into_iter().collect();
         map.insert(x.clone(), dfa_model.start);
         stack.push(x);
@@ -311,13 +355,16 @@ impl NfaModel {
                     if let TransitionType::Epsilon = new.kind {
                     } else {
                         let mut ctx = Context::new(HashSet::new());
-                        ctx.add_epsilons(vec![new.dest].into_iter().collect(), &dfa_model.nfa);
-                        println!("{:?}", ctx);
+                        ctx.add_epsilons(vec![new.dest].into_iter().collect(), &self.nfa);
                         let super_state: Vec<NodePointer> = ctx.nodes.into_iter().collect();
                         let d = if let Some(new_p) = map.get(&super_state) {
                             *new_p
                         } else {
-                            let y = dfa_model.nfa.new_node();
+                            let y = if super_state.contains(&self.end) {
+                                dfa_model.nfa.new_end()
+                            } else {
+                                dfa_model.nfa.new_node()  
+                            };
                             map.insert(super_state.clone(), y);
                             stack.push(super_state);
                             y

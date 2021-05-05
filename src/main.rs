@@ -1,5 +1,5 @@
 use clap::Clap;
-use languages::clike::{self, Clike};
+use languages::clike::Clike;
 use languages::parsing::*;
 use std::{error::Error, fs};
 use walkdir::WalkDir;
@@ -13,7 +13,7 @@ mod regex2nfa;
 mod regexparser;
 
 #[derive(Clap)]
-#[clap(version = "0.1.0", author = "John Westhoff <johnjwesthoff@gmail.com>")]
+#[clap(version = "0.1.1", author = "John Westhoff <johnjwesthoff@gmail.com>")]
 struct Opts {
     /// The path to the files we are reading
     #[clap(short, long, default_value = ".")]
