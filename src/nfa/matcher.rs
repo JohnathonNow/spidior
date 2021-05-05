@@ -10,7 +10,7 @@ use crate::languages::clike::Clike;
 pub struct Match {
     start: usize,
     len: usize,
-    _groups: Vec<Group>,
+    groups: Vec<Group>,
 }
 
 impl Match {
@@ -18,7 +18,7 @@ impl Match {
         Self {
             start,
             len,
-            _groups,
+            groups: _groups,
         }
     }
 
@@ -31,7 +31,7 @@ impl Match {
     }
 
     pub fn get_group(&self, i: usize, s: &String) -> String {
-        if let Some(x) = self._groups.get(i) {
+        if let Some(x) = self.groups.get(i) {
             s[x.start..x.start + x.len].to_string()
         } else {
             "".to_string()
@@ -75,6 +75,7 @@ pub fn find_dfa(input: &String, regex: Box<Regex>) -> Vec<Match> {
     let nfam = NfaModel::new(nfa, start, end);
     let nfam = nfam.to_dfa().unwrap();
     let (nfa, start, end) = (nfam.nfa, nfam.start, nfam.end);
+    println!("{:?}", nfa);
     let mut ctx0 = Context::new(HashSet::new());
     ctx0.add_epsilons(vec![start].into_iter().collect(), &nfa);
     let mut is = 0;
@@ -109,6 +110,11 @@ fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(find(&"bo".to_string(), regex).len(), 0); //no match
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
     assert_eq!(find(&"joee".to_string(), regex).len(), 2); //"joe", "e"
+    let regex = regexparser::parse("%s/(o*)o//g")?.find;
+    let os = "ooooo";
+    let found = find(&os.to_string(), regex);
+    assert_eq!(found.len(), 1); //entire string
+    assert_eq!(found.get(0).unwrap().get_group(1, &os.to_string()), "oooo");
     Ok(())
 }
 
@@ -118,10 +124,13 @@ fn test_find_dfa() -> Result<(), Box<dyn std::error::Error>> {
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
     assert_eq!(find_dfa(&"bob dole".to_string(), regex).len(), 2); //matches bob and e
     let regex = regexparser::parse("%s/bob|joe|e+//g")?.find;
-    //println!("{:?}", find_dfa(&"bo".to_string(), regex));
     assert_eq!(find_dfa(&"bo".to_string(), regex).len(), 0); //no match
     let regex = regexparser::parse("%s/bob|joe|e+//g")?.find;
-    //println!("{:?}", find_dfa(&"joee".to_string(), regex));
     assert_eq!(find_dfa(&"joee".to_string(), regex).len(), 2); //"joe", "e"
+    let regex = regexparser::parse("%s/(o*)o//g")?.find;
+    let os = "ooooo";
+    let found = find_dfa(&os.to_string(), regex);
+    assert_eq!(found.len(), 1); //entire string
+    assert_eq!(found.get(0).unwrap().get_group(1, &os.to_string()), "oooo");
     Ok(())
 }
