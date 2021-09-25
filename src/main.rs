@@ -12,6 +12,8 @@ mod nfa;
 mod regex2nfa;
 mod regexparser;
 
+use crate::regex2nfa::build_nfa;
+
 #[derive(Clap)]
 #[clap(version = "0.1.1", author = "John Westhoff <johnjwesthoff@gmail.com>")]
 struct Opts {
@@ -27,6 +29,9 @@ struct Opts {
     /// Whether we should just dump info without replacing
     #[clap(short, long)]
     dump: bool,
+    /// Whether we should print info about the regex nfa
+    #[clap(short, long)]
+    nfa: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -60,6 +65,10 @@ fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
 
 fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
     let replace = regexparser::parse(&opts.query.unwrap())?;
+    if opts.nfa {
+        let (nfa, _start, _end) = build_nfa(replace.clone().find);
+        println!("NFA is `{:?}`", nfa);
+    }
 
     for entry in WalkDir::new(opts.path)
         .follow_links(true)
