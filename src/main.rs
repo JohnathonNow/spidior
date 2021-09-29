@@ -3,6 +3,8 @@ use languages::clike::Clike;
 use languages::parsing::*;
 use std::{error::Error, fs};
 use walkdir::WalkDir;
+use std::io::{self, BufRead};
+
 #[macro_use]
 extern crate lalrpop_util;
 
@@ -23,6 +25,9 @@ struct Opts {
     /// The query string for find/replace for each file we find in the input, required if `dump` is not set
     #[clap(required_unless_present("dump"))]
     query: Option<String>,
+    /// Whether we are are interactively replacing things or not
+    #[clap(short = 'I', long)]
+    interactive: bool,
     /// Whether we should edit files in place or print to stdout
     #[clap(short, long)]
     in_place: bool,
@@ -32,6 +37,14 @@ struct Opts {
     /// Whether we should print info about the regex nfa
     #[clap(short, long)]
     nfa: bool,
+}
+
+fn ask(replace: &str, with: &str) -> bool {
+    println!("Replace:\n{}\nWith:\n{}\n?", replace, with);
+    let mut answer = String::new();
+    let stdin = io::stdin();
+    stdin.lock().read_line(&mut answer).unwrap();
+    return answer.to_lowercase().starts_with("y");
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -79,7 +92,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
                 let f_name = entry.file_name().to_string_lossy();
-                let res = nfa::replacer::replace(&contents, replace.clone())?;
+                let res = nfa::replacer::replace(&contents, replace.clone(), if opts.interactive { ask } else { |x, y| true} )?;
                 println!("Parsing file {}", f_name);
                 if opts.in_place {
                     fs::write(path, &res)?;

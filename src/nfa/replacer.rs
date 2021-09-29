@@ -6,14 +6,20 @@ use crate::{editing::textbuffer, regexparser::ast::{Replace, Replacement}};
 use crate::nfa::matcher::Match;
 use super::matcher::find;
 
-pub fn replace(input: &String, replacement: Replace) -> Result<String, Box<dyn Error>> {
+pub type Acceptor = fn(&str, &str) -> bool;
+
+pub fn replace(input: &String, replacement: Replace, acceptor: Acceptor) -> Result<String, Box<dyn Error>> {
     let matches = find(&input, replacement.clone().find);
     let mut tb = TextBuffer::new();
     let mut offset:i32 = 0;
     tb.add(input);
     for m in matches {
         let r = replace_to_string(&replacement.replace, &m, input);
-        tb.replace((m.start() as i32 + offset) as usize, m.len(), &r)?;
+        let start = (m.start() as i32 + offset) as usize;
+        let to_replace = tb.get(start, m.len())?;
+        if acceptor(&to_replace, &r) {
+            tb.replace(start, m.len(), &r)?;
+        }
         offset += r.len() as i32 - m.len() as i32;
     }
     Ok(tb.consume())

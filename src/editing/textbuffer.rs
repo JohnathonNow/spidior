@@ -26,18 +26,19 @@ impl TextBuffer {
     ///
     /// # Returns
     ///
-    /// A Result<(), Box<dyn Error>>, where on success, it returns a
-    /// unit. It will Err if you attempt to replace more text than
-    /// exists in the buffer.
+    /// A Result<String, Box<dyn Error>>, where on success, it returns
+    /// what was erased. It will Err if you attempt to replace more text
+    /// than exists in the buffer.
     pub fn replace(
         &mut self,
         start: usize,
         length: usize,
         replacement: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<String, Box<dyn Error>> {
         if self.buf.len() < start + length {
             return Err("Replacing more of the string than exists".into());
         }
+        let erased = self.buf[start..start + length].to_string();
         self.buf = format!(
             "{}{}{}",
             &self.buf[..start],
@@ -45,7 +46,31 @@ impl TextBuffer {
             &self.buf[start + length..]
         )
         .to_string();
-        Ok(())
+        Ok(erased)
+    }
+    /// Gets the text in the buffer starting at `start` and
+    /// extending for `length` characters.
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `start` - The index into the buffer we start reading from
+    /// * `length` - The length of the read we are performing
+    ///
+    /// # Returns
+    ///
+    /// A Result<String, Box<dyn Error>>, where on success, it returns
+    /// the desired text. It will Err if you attempt to read more text
+    /// than exists in the buffer.
+    pub fn get(
+        &mut self,
+        start: usize,
+        length: usize,
+    ) -> Result<String, Box<dyn Error>> {
+        if self.buf.len() < start + length {
+            return Err("Reading more of the string than exists".into());
+        }
+        Ok(self.buf[start..start + length].to_string())
     }
     /// Appends some text from `s` to the end of the buffer.
     ///
