@@ -240,7 +240,8 @@ fn test_replace_whole() {
     assert_eq!(
         crate::nfa::replacer::replace(
             &text,
-            crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap()
+            crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap(),
+            |x, y| true
         )
         .unwrap(),
         expected

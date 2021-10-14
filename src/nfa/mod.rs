@@ -283,7 +283,7 @@ impl Context {
                         }
                         TransitionType::QuerySetRange(s) => {
                             if let Some(x) = q.query(self.index, s) {
-                                println!("{}", self.index);
+                                //println!("{}", self.index);
                                 self.index = x - 1;
                                 nodes.insert(t.dest);
                             }

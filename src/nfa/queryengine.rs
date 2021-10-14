@@ -42,6 +42,16 @@ impl QueryEngine {
                         crate::regexparser::ast::Query::Kv(k, v) if k == "name" => {
                             name = Some(v);
                         }
+                        crate::regexparser::ast::Query::Kv(k, v) if k == "pos" => {
+                            let mut s = v.split(":");
+                            let (pos_str, len_str) = (s.next()?, s.next()?);
+                            let (pos, len) = (pos_str.parse::<usize>().ok()?, len_str.parse::<usize>().ok()?);
+                            if position + self.offset == pos {
+                                return Some(len);
+                            } else {
+                                return None;
+                            }
+                        }
                         _ => {}
                     }
                     break;
@@ -53,6 +63,16 @@ impl QueryEngine {
                         }
                         crate::regexparser::ast::Query::Kv(k, v) if k == "name" => {
                             name = Some(v);
+                        }
+                        crate::regexparser::ast::Query::Kv(k, v) if k == "pos" => {
+                            let mut s = v.split(":");
+                            let (pos_str, len_str) = (s.next()?, s.next()?);
+                            let (pos, len) = (pos_str.parse::<usize>().ok()?, len_str.parse::<usize>().ok()?);
+                            if position + self.offset == pos {
+                                return Some(len);
+                            } else {
+                                return None;
+                            }
                         }
                         _ => {}
                     }
@@ -69,7 +89,6 @@ impl QueryEngine {
                 None => true,
             } && position + self.offset == ident.start
             {
-                println!("{:?}", ident);
                 return Some(ident.end - self.offset);
             }
         }
