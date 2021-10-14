@@ -45,7 +45,7 @@ Note that right now the program isn't complete. Currently, the following operati
  - Sets and negative sets, but only ranges and explicit characters (e.g. [a-z] or [^xyz] but not \\w or \[\[:upper:]])
  - And most importantly, special queries about identifiers within input programs
     - Currently these queries are put between double square brackets, with a comma separate list of criteria
-       - The supported criteria are `name=$NAME` where $NAME is the name of the identifier you are grepping for, and `type=$TYPE` where $TYPE is the type of the identifier you are grepping for
+       - The supported criteria are `name=$NAME` where $NAME is the name of the identifier you are grepping for, `type=$TYPE` where $TYPE is the type of the identifier you are grepping for, and `pos=$POS:$LEN` where $POS is the position into the string to match on for length $LEN.
 
 If the `--dump` argument is used, rather than make any replacements, `spidior` will simply
 print out the findings of its lightwight parses from running on the files in the specified path.
