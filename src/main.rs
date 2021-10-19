@@ -23,7 +23,7 @@ struct Opts {
     #[clap(short, long, default_value = ".")]
     path: String,
     /// The query string for find/replace for each file we find in the input, required if `dump` is not set
-    #[clap(required_unless_present("dump"))]
+    #[clap(short = 'q', long, required_unless_present("dump"))]
     query: Option<String>,
     /// Whether we are are interactively replacing things or not
     #[clap(short = 'I', long)]
