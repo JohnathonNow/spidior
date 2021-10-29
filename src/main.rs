@@ -37,6 +37,9 @@ struct Opts {
     /// Whether we should print info about the regex nfa
     #[clap(short, long)]
     nfa: bool,
+    /// Whether we should search recursively
+    #[clap(short, long)]
+    recursive: bool,
 }
 
 fn ask(replace: &str, with: &str) -> bool {
@@ -58,10 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
     let c = Clike {};
-    for entry in WalkDir::new(opts.path)
-        .follow_links(true)
-        .into_iter()
-        .filter_map(|e| e.ok())
+    for entry in get_dir_iter(opts.recursive, &opts.path)
     {
         let path = entry.path();
         if path.is_file() {
@@ -83,10 +83,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         println!("NFA is `{:?}`", nfa);
     }
 
-    for entry in WalkDir::new(opts.path)
-        .follow_links(true)
-        .into_iter()
-        .filter_map(|e| e.ok())
+    for entry in get_dir_iter(opts.recursive, &opts.path)
     {
         let path = entry.path();
         if path.is_file() {
@@ -103,4 +100,14 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         }
     }
     Ok(())
+}
+
+fn get_dir_iter(recursive: bool, path: &str) -> impl Iterator<Item=walkdir::DirEntry> {
+    let mut iter = WalkDir::new(path);
+    if !recursive {
+        iter = iter.max_depth(1);
+    }
+    iter.follow_links(true)
+        .into_iter()
+        .filter_map(|e| e.ok())
 }
