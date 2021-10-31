@@ -32,6 +32,9 @@ FLAGS:
     -d, --dump        Whether we should just dump info without replacing
     -h, --help        Prints help information
     -i, --in-place    Whether we should edit files in place or print to stdout
+    -I, --interactive Whether we are are interactively replacing things or not
+    -n, --nfa         Whether we should print info about the regex nfa
+    -r, --recursive   Whether we should search recursively
     -V, --version     Prints version information
 
 OPTIONS:
