@@ -23,10 +23,7 @@ spidior 0.1.1
 John Westhoff <johnjwesthoff@gmail.com>
 
 USAGE:
-    spidior [FLAGS] [OPTIONS] [query]
-
-ARGS:
-    <query>    The query string for find/replace for each file we find in the input, required if `dump` is not set
+    spidior [FLAGS] [OPTIONS]
 
 FLAGS:
     -d, --dump        Whether we should just dump info without replacing
@@ -39,6 +36,7 @@ FLAGS:
 
 OPTIONS:
     -p, --path <path>    The path to the files we are reading [default: .]
+    -q, --query <query>  The query string for find/replace for each file we find in the input, required if `dump` is not set
 
 ```
 
