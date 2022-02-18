@@ -43,7 +43,7 @@ struct Opts {
 }
 
 fn ask(replace: &str, with: &str) -> bool {
-    println!("Replace:\n{}\nWith:\n{}\n?", replace, with);
+    eprintln!("Replace:\n{}\nWith:\n{}\n?", replace, with);
     let mut answer = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut answer).unwrap();
@@ -79,7 +79,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
     let replace = regexparser::parse(&opts.query.unwrap())?;
     if opts.nfa {
         let (nfa, _start, _end) = build_nfa(replace.clone().find);
-        println!("NFA is `{:?}`", nfa);
+        eprintln!("NFA is `{:?}`", nfa);
     }
 
     for entry in get_dir_iter(opts.recursive, &opts.path)
@@ -89,7 +89,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
             if let Ok(contents) = fs::read_to_string(path) {
                 let f_name = entry.file_name().to_string_lossy();
                 let res = nfa::replacer::replace(&contents, replace.clone(), if opts.interactive { ask } else { |x, y| true} )?;
-                println!("Parsing file {}", f_name);
+                eprintln!("Parsing file {}", f_name);
                 if opts.in_place {
                     fs::write(path, &res)?;
                 } else {
