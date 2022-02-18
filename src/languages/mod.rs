@@ -5,19 +5,42 @@
 //! identifiers do not have statically knowable types, it
 //! is not Identifiers.
 //! C and Java on the other hand have both extractable Functions
-//! and Identifiers. 
+//! and Identifiers.
 
 /// Provides traits for parsing different features of source code
 pub mod parsing {
-    /// Represents a function in a code file
-    #[derive(Debug)]
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Info {
+        pub filename: String,
+        pub functions: Vec<Function>,
+        pub identifiers: Vec<Identifier>,
+    }
+
+    impl Info {
+        pub fn new(
+            filename: String,
+            functions: Vec<Function>,
+            identifiers: Vec<Identifier>,
+        ) -> Self {
+            Self {
+                filename,
+                functions,
+                identifiers,
+            }
+        }
+    }
+
+    /// Represents a function in a source code file
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Function {
         /// We only care about named functions - thus, all functions have names
         pub name: String,
     }
 
     /// Represents an identifier in a piece of code, which has an associated type
-    #[derive(Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Identifier {
         /// The name of the identifier, which is the set of characters used to refer to it
         pub name: String,

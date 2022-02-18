@@ -58,6 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
     let c = Clike {};
+    let mut dumps = Vec::new();
     for entry in WalkDir::new(opts.path)
         .follow_links(true)
         .into_iter()
@@ -67,12 +68,11 @@ fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
                 let f_name = entry.file_name().to_string_lossy();
-                println!("Parsing file {}", f_name);
-                println!("\tFunctions: {:?}", c.read_functions(&contents));
-                println!("\tIdentifiers: {:?}", c.read_identifiers(&contents));
+                dumps.push(Info::new(f_name.to_string(), c.read_functions(&contents), c.read_identifiers(&contents)));
             }
         }
     }
+    println!("{}", serde_json::to_string(&dumps).unwrap());
     Ok(())
 }
 
