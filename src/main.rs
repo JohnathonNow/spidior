@@ -67,8 +67,7 @@ fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
         let path = entry.path();
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
-                let f_name = entry.file_name().to_string_lossy();
-                dumps.push(Info::new(f_name.to_string(), c.read_functions(&contents), c.read_identifiers(&contents)));
+                dumps.push(Info::new(path.to_string_lossy().to_string(), c.read_functions(&contents), c.read_identifiers(&contents)));
             }
         }
     }

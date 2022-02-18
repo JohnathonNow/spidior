@@ -45,7 +45,7 @@ pub mod parsing {
         /// The name of the identifier, which is the set of characters used to refer to it
         pub name: String,
         /// The type of value the identifier represents
-        pub typ: String,
+        pub type_name: String,
         /// The starting index within the source file this identifier is located at
         pub start: usize,
         /// The index one past the end of the identifier's location
@@ -88,7 +88,7 @@ pub mod parsing {
         pub fn new(name: String, typ: String, start: usize, end: usize) -> Self {
             Self {
                 name,
-                typ,
+                type_name: typ,
                 start,
                 end,
             }

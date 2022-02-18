@@ -85,7 +85,7 @@ impl QueryEngine {
                 Some(ref y) => *y == ident.name,
                 None => true,
             } && match kind {
-                Some(ref y) => *y == ident.typ,
+                Some(ref y) => *y == ident.type_name,
                 None => true,
             } && position + self.offset == ident.start
             {
