@@ -193,7 +193,7 @@ impl Identifiers for Clike {
                         n2e = i;
                         let name = text[n2s..n2e].to_string();
                         let typ = text[n1s..n1e].to_string();
-                        if Clike::is_allowed(name.as_ref()) && Clike::is_allowed(typ.as_ref()) {
+                        if Self::is_allowed(name.as_ref()) && Self::is_allowed(typ.as_ref()) {
                             v.push(Identifier::new(name.clone(), typ.clone(), n2s, n2e));
                             stack.last_mut().unwrap().insert(name, typ);
                         }
