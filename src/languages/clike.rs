@@ -98,7 +98,7 @@ impl Functions for Clike {
                         braces -= 1;
                     }
                     if braces == 0 {
-                        v.push(Function::new(text[start..end].to_string(), 0, i));
+                        v.push(Function::new(text[start..end].to_string(), start, i));
                         s = FunctionFsm::NONE;
                     }
                 }
@@ -220,7 +220,7 @@ impl Identifiers for Clike {
 
 #[test]
 fn test_functions() {
-    let expected = "[Function { name: \"LightningOvercharge\", start: 0, end: 510 }, Function { name: \"getAction\", start: 0, end: 869 }, Function { name: \"onSpawn\", start: 0, end: 949 }, Function { name: \"getPassiveAction\", start: 0, end: 1184 }, Function { name: \"getCost\", start: 0, end: 1276 }, Function { name: \"getName\", start: 0, end: 1345 }, Function { name: \"getTip\", start: 0, end: 1425 }, Function { name: \"getActionNetwork\", start: 0, end: 1637 }]";
+    let expected = "[Function { name: \"LightningOvercharge\", start: 486, end: 510 }, Function { name: \"getAction\", start: 844, end: 869 }, Function { name: \"onSpawn\", start: 927, end: 949 }, Function { name: \"getPassiveAction\", start: 1152, end: 1184 }, Function { name: \"getCost\", start: 1264, end: 1276 }, Function { name: \"getName\", start: 1333, end: 1345 }, Function { name: \"getTip\", start: 1414, end: 1425 }, Function { name: \"getActionNetwork\", start: 1539, end: 1637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let clike = Clike {};
     d.push("resources/test/functions.java");
