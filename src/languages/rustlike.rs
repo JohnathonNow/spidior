@@ -1,4 +1,4 @@
-//! Provides the parser for "rust-like" languages
+//! Provides the parser for "rust-like" languagescd 
 
 use super::parsing::{Function, Functions, Identifier, Identifiers};
 

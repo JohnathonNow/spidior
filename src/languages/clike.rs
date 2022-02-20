@@ -28,6 +28,7 @@ enum FunctionFsm {
     NAME,
     SPACE,
     BRACE,
+    INNER,
     NONE,
     PARENS(i32),
 }
@@ -47,6 +48,7 @@ impl Functions for Clike {
         let mut s = FunctionFsm::NONE;
         let mut start = 0;
         let mut end = 0;
+        let mut braces = 0;
         let mut v = Vec::new();
         for (i, c) in text.chars().enumerate() {
             match s {
@@ -86,8 +88,19 @@ impl Functions for Clike {
                     }
                 }
                 FunctionFsm::BRACE => {
-                    v.push(Function::new(text[start..end].to_string()));
-                    s = FunctionFsm::NONE;
+                    braces = 0;
+                    s = FunctionFsm::INNER;
+                }
+                FunctionFsm::INNER => {
+                    if c == '{' {
+                        braces += 1;
+                    } else if c == '}' {
+                        braces -= 1;
+                    }
+                    if braces == 0 {
+                        v.push(Function::new(text[start..end].to_string(), 0, i));
+                        s = FunctionFsm::NONE;
+                    }
                 }
             }
         }
@@ -207,7 +220,7 @@ impl Identifiers for Clike {
 
 #[test]
 fn test_functions() {
-    let expected = "[Function { name: \"LightningOvercharge\" }, Function { name: \"getAction\" }, Function { name: \"onSpawn\" }, Function { name: \"getPassiveAction\" }, Function { name: \"getCost\" }, Function { name: \"getName\" }, Function { name: \"getTip\" }, Function { name: \"getActionNetwork\" }]";
+    let expected = "[Function { name: \"LightningOvercharge\", start: 0, end: 510 }, Function { name: \"getAction\", start: 0, end: 869 }, Function { name: \"onSpawn\", start: 0, end: 949 }, Function { name: \"getPassiveAction\", start: 0, end: 1184 }, Function { name: \"getCost\", start: 0, end: 1276 }, Function { name: \"getName\", start: 0, end: 1345 }, Function { name: \"getTip\", start: 0, end: 1425 }, Function { name: \"getActionNetwork\", start: 0, end: 1637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let clike = Clike {};
     d.push("resources/test/functions.java");
@@ -218,7 +231,7 @@ fn test_functions() {
 
 #[test]
 fn test_identifiers() {
-    let expected = "[Identifier { name: \"com\", typ: \"static\", start: 67, end: 70 }, Identifier { name: \"com\", typ: \"static\", start: 232, end: 235 }, Identifier { name: \"com\", typ: \"static\", start: 273, end: 276 }, Identifier { name: \"com\", typ: \"static\", start: 316, end: 319 }, Identifier { name: \"com\", typ: \"static\", start: 361, end: 364 }, Identifier { name: \"LightningOvercharge\", typ: \"class\", start: 414, end: 433 }, Identifier { name: \"charge\", typ: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", typ: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", typ: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", typ: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", typ: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }, Identifier { name: \"me\", typ: \"Session\", start: 635, end: 637 }]";
+    let expected = "[Identifier { name: \"com\", type_name: \"static\", start: 67, end: 70 }, Identifier { name: \"com\", type_name: \"static\", start: 232, end: 235 }, Identifier { name: \"com\", type_name: \"static\", start: 273, end: 276 }, Identifier { name: \"com\", type_name: \"static\", start: 316, end: 319 }, Identifier { name: \"com\", type_name: \"static\", start: 361, end: 364 }, Identifier { name: \"LightningOvercharge\", type_name: \"class\", start: 414, end: 433 }, Identifier { name: \"charge\", type_name: \"int\", start: 462, end: 468 }, Identifier { name: \"charge\", type_name: \"int\", start: 517, end: 523 }, Identifier { name: \"number\", type_name: \"double\", start: 547, end: 553 }, Identifier { name: \"me\", type_name: \"Session\", start: 601, end: 603 }, Identifier { name: \"number\", type_name: \"double\", start: 615, end: 621 }, Identifier { name: \"me\", type_name: \"Session\", start: 635, end: 637 }, Identifier { name: \"me\", type_name: \"Session\", start: 635, end: 637 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("resources/test/identifiers.java");
     let clike = Clike {};

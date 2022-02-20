@@ -37,6 +37,10 @@ pub mod parsing {
     pub struct Function {
         /// We only care about named functions - thus, all functions have names
         pub name: String,
+        /// The start position of the function
+        pub start: usize,
+        /// The end position of the function
+        pub end: usize,
     }
 
     /// Represents an identifier in a piece of code, which has an associated type
@@ -101,8 +105,8 @@ pub mod parsing {
         ///
         /// * `text` - A String that contains the name of the function
         ///
-        pub fn new(name: String) -> Self {
-            Self { name }
+        pub fn new(name: String, start: usize, end: usize) -> Self {
+            Self { name, start, end }
         }
     }
 }
