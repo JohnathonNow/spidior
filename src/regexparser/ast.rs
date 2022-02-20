@@ -141,6 +141,7 @@ pub enum Query {
 #[derive(Debug, Clone)]
 pub enum Location {
     Path(String),
+    Function(String),
     All
 }
 

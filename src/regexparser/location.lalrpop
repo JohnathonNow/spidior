@@ -4,5 +4,6 @@ grammar;
 
 pub Location: Box<Location> = {
     "%" => Box::new(Location::All),
-    <s:r"[^%:]*"> ":" => Box::new(Location::Path(s.to_string())),
+    <x:r"<"> <s:r"[^%:<>()]*"> <y:r">:"> => Box::new(Location::Path(s.to_string())),
+    "(" <s:r"[^%:<>()]*"> "):" => Box::new(Location::Function(s.to_string())),
 };
