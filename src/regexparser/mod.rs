@@ -89,6 +89,8 @@ fn parsing_query() {
 fn parsing_location() {
     assert!(location::LocationParser::new().parse("<../../../>:").is_ok());
     assert!(location::LocationParser::new().parse("(function):").is_ok());
+    assert!(location::LocationParser::new().parse("l0-2:").is_ok());
+    assert!(location::LocationParser::new().parse("c0-2:").is_ok());
     assert!(location::LocationParser::new().parse("%").is_ok());
     assert!(location::LocationParser::new().parse("%:").is_err());
 }

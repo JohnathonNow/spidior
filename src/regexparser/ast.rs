@@ -142,6 +142,8 @@ pub enum Query {
 pub enum Location {
     Path(String),
     Function(String),
+    LineRange(usize, usize),
+    CharRange(usize, usize),
     All
 }
 

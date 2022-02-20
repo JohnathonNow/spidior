@@ -35,6 +35,13 @@ pub fn replace(
                     false
                 }
             },
+            crate::regexparser::ast::Location::CharRange(cstart, cend) => {
+                start >= *cstart && start < *cend
+            },
+            crate::regexparser::ast::Location::LineRange(lstart, lend) => {
+                let line = input[1..start].matches('\n').count();
+                line >= *lstart && line < *lend
+            },
             _ => true,
         };
 
