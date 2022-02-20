@@ -101,6 +101,7 @@ pub fn find_dfa(input: &String, regex: Box<Regex>) -> Vec<Match> {
     v
 }
 
+#[ignore]
 #[test]
 fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
@@ -118,6 +119,7 @@ fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn test_find_dfa() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
