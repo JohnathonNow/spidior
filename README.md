@@ -40,16 +40,36 @@ OPTIONS:
 
 ```
 
-Note that right now the program isn't complete. Currently, the following operations are supported:
+If the `--dump` argument is used, rather than make any replacements, `spidior` will simply
+print out the findings of its lightwight parses from running on the files in the specified path.
+Otherwise, a query must be specified with either -q or --query.
+
+### Queries
+
+Queries are very similar to `sed` s commands, and take the form ${LOCATION}${COMMAND}/${FIND}/${REPLACE}/${END}
+Where ${LOCATION} is where replacements should be allowed to take place (more on that below), ${COMMAND} is always s,
+$(FIND) is a regular expression, ${REPLACE} is a replacement, and ${END} is either nothing or the letter 'g' to allow multiple
+replacements on a given line.
+
+#### Locations
+A location can be one of several things:  
+ - `%` - anywhere in any file the path specifier includes  
+ - `<path_suffix>` - anywhere in any file whose path ends in path_suffix  
+ - `(function)` - anywhere in any file within a function named function  
+ - `cA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
+ - `lA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
+
+#### Regex
+Regexes follow standard `sed`like syntax, and support the following operations:  
  - Basic regex operations (concatenation, conjunction, and star [and also plus])
- - Grouping, with backreferences for replacements only
+ - Grouping with parens
  - Sets and negative sets, but only ranges and explicit characters (e.g. [a-z] or [^xyz] but not \\w or \[\[:upper:]])
  - And most importantly, special queries about identifiers within input programs
     - Currently these queries are put between double square brackets, with a comma separate list of criteria
        - The supported criteria are `name=$NAME` where $NAME is the name of the identifier you are grepping for, `type=$TYPE` where $TYPE is the type of the identifier you are grepping for, and `pos=$POS:$LEN` where $POS is the position into the string to match on for length $LEN.
 
-If the `--dump` argument is used, rather than make any replacements, `spidior` will simply
-print out the findings of its lightwight parses from running on the files in the specified path.
+#### Replacements
+A replacement is a string literal that may include backreferences to groups using a backslash followed by a number.
 
 Example
 -------
