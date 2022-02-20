@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
-use crate::languages::parsing::{Function, Functions, Identifier, Identifiers};
+use crate::languages::parsing::{Functions, Identifier, Identifiers};
 pub struct QueryEngine {
     idents: Vec<Identifier>,
-    functs: Vec<Function>,
     function_locations: HashMap<String, (usize, usize)>,
     offset: usize,
 }
 
 impl QueryEngine {
+    #[cfg(test)]
     pub fn new() -> Self {
         Self {
             idents: vec![],
-            functs: vec![],
             function_locations: HashMap::new(),
             offset: 0,
         }
@@ -30,7 +29,6 @@ impl QueryEngine {
         }
         Self {
             idents: i.read_identifiers(s),
-            functs,
             function_locations,
             offset: 0,
         }

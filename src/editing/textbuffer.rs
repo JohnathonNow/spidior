@@ -88,6 +88,7 @@ impl TextBuffer {
     /// # Returns
     ///
     /// A String reference with the buffer contents
+    #[cfg(test)]
     pub fn read(&self) -> &String {
         &self.buf
     }

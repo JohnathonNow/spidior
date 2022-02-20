@@ -1,8 +1,6 @@
 //! This module is for building an `nfa::Nfa` from a
 //! a `regexparser::ast::Regex`
 
-use std::collections::HashSet;
-
 use crate::{nfa::NodePointer, regexparser::parse_set};
 
 use super::nfa::Nfa;
@@ -185,6 +183,7 @@ fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
 #[test]
 fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
     use crate::{nfa::Context, regexparser};
+    use std::collections::HashSet;
 
     let regex = regexparser::parse("%s/bob|joe|e*//g")?;
     let (nfa, start, end) = build_nfa(regex.find);

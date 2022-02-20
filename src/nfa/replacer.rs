@@ -87,56 +87,56 @@ fn test_replace_to_string() -> Result<(), Box<dyn std::error::Error>> {
 fn test_replace() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
     let regex = regexparser::parse("%s/bill/bob/g")?;
-    assert_eq!(replace(&"joejoe".into(), regex, |x, y| true)?, "joejoe");
+    assert_eq!(replace(&"joejoe".into(), regex, |_, _| true)?, "joejoe");
 
     let regex = regexparser::parse("%s/bob|joe|e*/bob/g")?;
-    assert_eq!(replace(&"joejoe".into(), regex, |x, y| true)?, "bobbob");
+    assert_eq!(replace(&"joejoe".into(), regex, |_, _| true)?, "bobbob");
 
     let regex = regexparser::parse("%s/bob|joe|e*/jack/g")?;
-    assert_eq!(replace(&"joee".into(), regex, |x, y| true)?, "jackjack");
+    assert_eq!(replace(&"joee".into(), regex, |_, _| true)?, "jackjack");
 
     let regex = regexparser::parse("%s/bob|joe|e*/o/g")?;
-    assert_eq!(replace(&"joeejoe".into(), regex, |x, y| true)?, "ooo");
+    assert_eq!(replace(&"joeejoe".into(), regex, |_, _| true)?, "ooo");
 
     let regex = regexparser::parse("%s/(joe)*/bob/g")?;
-    assert_eq!(replace(&"joejoejoejo".into(), regex, |x, y| true)?, "bobjo");
+    assert_eq!(replace(&"joejoejoejo".into(), regex, |_, _| true)?, "bobjo");
 
     let regex = regexparser::parse("%s/(joe)*/bob/g")?;
-    assert_eq!(replace(&"eee".into(), regex, |x, y| true)?, "eee");
+    assert_eq!(replace(&"eee".into(), regex, |_, _| true)?, "eee");
 
     let regex = regexparser::parse("%s/jo*e/bob/g")?;
     assert_eq!(
-        replace(&"jejoejooeej".into(), regex, |x, y| true)?,
+        replace(&"jejoejooeej".into(), regex, |_, _| true)?,
         "bobbobbobej"
     );
 
     let regex = regexparser::parse("%s/jo+e/bob/g")?;
     assert_eq!(
-        replace(&"jejoejooeej".into(), regex, |x, y| true)?,
+        replace(&"jejoejooeej".into(), regex, |_, _| true)?,
         "jebobbobej"
     );
 
     let regex = regexparser::parse("%s/[a-z]*/bob/g")?;
-    assert_eq!(replace(&"-2607".into(), regex, |x, y| true)?, "-2607");
+    assert_eq!(replace(&"-2607".into(), regex, |_, _| true)?, "-2607");
 
     let regex = regexparser::parse("%s/[a-z]*/bob/g")?;
     assert_eq!(
-        replace(&"-2e6f0z7a".into(), regex, |x, y| true)?,
+        replace(&"-2e6f0z7a".into(), regex, |_, _| true)?,
         "-2bob6bob0bob7bob"
     );
 
     let regex = regexparser::parse("%s/[^a-z]*/bob/g")?;
-    assert_eq!(replace(&"joe".into(), regex, |x, y| true)?, "joe");
+    assert_eq!(replace(&"joe".into(), regex, |_, _| true)?, "joe");
 
     let regex = regexparser::parse("%s/[^a-z]*/bob/g")?;
-    assert_eq!(replace(&"2607".into(), regex, |x, y| true)?, "bob");
+    assert_eq!(replace(&"2607".into(), regex, |_, _| true)?, "bob");
     Ok(())
 }
 #[test]
 fn test_replace_backref() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
     let regex = regexparser::parse("%s/(1)/\\1\\1/g")?;
-    assert_eq!(replace(&"1".into(), regex, |x, y| true)?, "11");
+    assert_eq!(replace(&"1".into(), regex, |_, _| true)?, "11");
     Ok(())
 }
 
@@ -144,10 +144,10 @@ fn test_replace_backref() -> Result<(), Box<dyn std::error::Error>> {
 fn test_pos() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
     let regex = regexparser::parse("%s/[[pos=0:3]]/bob/g")?;
-    assert_eq!(replace(&"joejoe".into(), regex, |x, y| true)?, "bobjoe");
+    assert_eq!(replace(&"joejoe".into(), regex, |_, _| true)?, "bobjoe");
     let regex = regexparser::parse("%s/[[pos=1:3]]/bob/g")?;
-    assert_eq!(replace(&"joejoe".into(), regex, |x, y| true)?, "jboboe");
+    assert_eq!(replace(&"joejoe".into(), regex, |_, _| true)?, "jboboe");
     let regex = regexparser::parse("%s/[[pos=2:1]]joe/bob/g")?;
-    assert_eq!(replace(&"joejoe".into(), regex, |x, y| true)?, "jobob");
+    assert_eq!(replace(&"joejoe".into(), regex, |_, _| true)?, "jobob");
     Ok(())
 }

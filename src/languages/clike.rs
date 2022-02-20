@@ -256,7 +256,7 @@ fn test_replace_whole() {
         crate::nfa::replacer::replace(
             &text,
             crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap(),
-            |x, y| true
+            |_, _| true
         )
         .unwrap(),
         expected

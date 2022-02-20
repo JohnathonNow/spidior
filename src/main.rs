@@ -93,7 +93,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
                     regexparser::ast::Location::Path(suffix) => { if !path_name.ends_with(suffix) { continue; } },
                     _ => {}
                 }
-                let res = nfa::replacer::replace(&contents, replace.clone(), if opts.interactive { ask } else { |x, y| true} )?;
+                let res = nfa::replacer::replace(&contents, replace.clone(), if opts.interactive { ask } else { |_, _| true} )?;
                 eprintln!("Parsing file {}", f_name);
                 if opts.in_place {
                     fs::write(path, &res)?;

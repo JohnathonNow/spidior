@@ -16,7 +16,7 @@ impl Functions for Rustlike {
     ///
     /// A Vec of Function containing information on every function
     /// declared within text
-    fn read_functions(&self, text: &str) -> Vec<Function> {
+    fn read_functions(&self, _text: &str) -> Vec<Function> {
         todo!("implement this");
     }
 }
@@ -33,7 +33,7 @@ impl Identifiers for Rustlike {
     ///
     /// A Vec of Identifier containing information on every use of
     /// an identifier declared within the code
-    fn read_identifiers(&self, text: &str) -> Vec<Identifier> {
+    fn read_identifiers(&self, _text: &str) -> Vec<Identifier> {
         todo!("implement this");
 
     }
