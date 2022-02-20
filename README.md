@@ -54,10 +54,10 @@ replacements on a given line.
 #### Locations
 A location can be one of several things:  
  - `%` - anywhere in any file the path specifier includes  
- - `<path_suffix>` - anywhere in any file whose path ends in path_suffix  
- - `(function)` - anywhere in any file within a function named function  
- - `cA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
- - `lA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
+ - `<path_suffix>:` - anywhere in any file whose path ends in path_suffix  
+ - `(function):` - anywhere in any file within a function named function  
+ - `cA-B:` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
+ - `lA-B:` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
 
 #### Regex
 Regexes follow standard `sed`like syntax, and support the following operations:  
@@ -143,7 +143,7 @@ is very overly-enthusiastic - it identifies many things as identifiers that are,
 As an example, here is the result of running `spidior --dump -p identifiers.java`:
 
 ```json
-    [{"filename":"identifiers.java","functions":[{"name":"LightningOvercharge","start":507,"end":534},{"name":"onSpawn","start":605,"end":671}],"identifiers":[{"name":"com","type_name":"static","start":67,"end":70},{"name":"com","type_name":"static","start":232,"end":235},{"name":"com","type_name":"static","start":273,"end":276},{"name":"com","type_name":"static","start":316,"end":319},{"name":"com","type_name":"static","start":361,"end":364},{"name":"LightningOvercharge","type_name":"class","start":414,"end":433},{"name":"charge","type_name":"int","start":462,"end":468},{"name":"charge","type_name":"int","start":517,"end":523},{"name":"number","type_name":"double","start":547,"end":553},{"name":"me","type_name":"Session","start":601,"end":603},{"name":"number","type_name":"double","start":615,"end":621},{"name":"me","type_name":"Session","start":635,"end":637},{"name":"me","type_name":"Session","start":635,"end":637}]}]
+[{"filename":"identifiers.java","functions":[{"name":"LightningOvercharge","start":507,"end":534},{"name":"onSpawn","start":605,"end":671}],"identifiers":[{"name":"com","type_name":"static","start":67,"end":70},{"name":"com","type_name":"static","start":232,"end":235},{"name":"com","type_name":"static","start":273,"end":276},{"name":"com","type_name":"static","start":316,"end":319},{"name":"com","type_name":"static","start":361,"end":364},{"name":"LightningOvercharge","type_name":"class","start":414,"end":433},{"name":"charge","type_name":"int","start":462,"end":468},{"name":"charge","type_name":"int","start":517,"end":523},{"name":"number","type_name":"double","start":547,"end":553},{"name":"me","type_name":"Session","start":601,"end":603},{"name":"number","type_name":"double","start":615,"end":621},{"name":"me","type_name":"Session","start":635,"end":637},{"name":"me","type_name":"Session","start":635,"end":637}]}]
 ```
 
 It correctly identifies the two functions in the source file, but it finds far many variables than actually are real - it found quite a few uses of the "variable" `com` of the "type" `static`. Again in reality you would never try to replace on identifiers of type `static` since that isn't a type, so this isn't an immediate issue. 
