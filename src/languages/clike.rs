@@ -48,6 +48,7 @@ impl Functions for Clike {
         let mut s = FunctionFsm::NONE;
         let mut start = 0;
         let mut end = 0;
+        let mut start_body = 0;
         let mut braces = 0;
         let mut v = Vec::new();
         for (i, c) in text.chars().enumerate() {
@@ -82,13 +83,14 @@ impl Functions for Clike {
                         s = FunctionFsm::NAME;
                         start = i;
                     } else if c == '{' {
+                        start_body = i;
                         s = FunctionFsm::BRACE;
                     } else if !c.is_whitespace() {
                         s = FunctionFsm::NONE;
                     }
                 }
                 FunctionFsm::BRACE => {
-                    braces = 0;
+                    braces = 1;
                     s = FunctionFsm::INNER;
                 }
                 FunctionFsm::INNER => {
@@ -98,7 +100,7 @@ impl Functions for Clike {
                         braces -= 1;
                     }
                     if braces == 0 {
-                        v.push(Function::new(text[start..end].to_string(), start, i));
+                        v.push(Function::new(text[start..end].to_string(), start_body, i + 1));
                         s = FunctionFsm::NONE;
                     }
                 }
@@ -220,7 +222,7 @@ impl Identifiers for Clike {
 
 #[test]
 fn test_functions() {
-    let expected = "[Function { name: \"LightningOvercharge\", start: 486, end: 510 }, Function { name: \"getAction\", start: 844, end: 869 }, Function { name: \"onSpawn\", start: 927, end: 949 }, Function { name: \"getPassiveAction\", start: 1152, end: 1184 }, Function { name: \"getCost\", start: 1264, end: 1276 }, Function { name: \"getName\", start: 1333, end: 1345 }, Function { name: \"getTip\", start: 1414, end: 1425 }, Function { name: \"getActionNetwork\", start: 1539, end: 1637 }]";
+    let expected = "[Function { name: \"LightningOvercharge\", start: 508, end: 812 }, Function { name: \"getAction\", start: 867, end: 874 }, Function { name: \"onSpawn\", start: 947, end: 1120 }, Function { name: \"getPassiveAction\", start: 1182, end: 1233 }, Function { name: \"getCost\", start: 1274, end: 1299 }, Function { name: \"getName\", start: 1343, end: 1380 }, Function { name: \"getTip\", start: 1423, end: 1507 }, Function { name: \"getActionNetwork\", start: 1635, end: 1713 }]";
     let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let clike = Clike {};
     d.push("resources/test/functions.java");
