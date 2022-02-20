@@ -39,13 +39,12 @@ impl Match {
     }
 }
 
-pub fn find(input: &String, regex: Box<Regex>) -> Vec<Match> {
+pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let (nfa, start, end) = build_nfa(regex);
     let mut ctx0 = Context::new(HashSet::new());
     ctx0.add_epsilons(vec![start].into_iter().collect(), &nfa);
     let mut is = 0;
-    let mut qe = QueryEngine::build(input, Box::new(Clike{}), Box::new(Clike{}));
     while is < input.len() {
         let mut new = None;
         let mut ctx = ctx0.clone();
@@ -106,14 +105,18 @@ pub fn find_dfa(input: &String, regex: Box<Regex>) -> Vec<Match> {
 fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
-    assert_eq!(find(&"bob dole".to_string(), regex).len(), 2); //matches bob and e
+    let mut qe = QueryEngine::build(&"bob dole".to_string(), Box::new(Clike{}), Box::new(Clike{}));
+    assert_eq!(find(&mut qe, &"bob dole".to_string(), regex).len(), 2); //matches bob and e
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
-    assert_eq!(find(&"bo".to_string(), regex).len(), 0); //no match
+    let mut qe = QueryEngine::build(&"bo".to_string(), Box::new(Clike{}), Box::new(Clike{}));
+    assert_eq!(find(&mut qe, &"bo".to_string(), regex).len(), 0); //no match
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;
-    assert_eq!(find(&"joee".to_string(), regex).len(), 2); //"joe", "e"
+    let mut qe = QueryEngine::build(&"joee".to_string(), Box::new(Clike{}), Box::new(Clike{}));
+    assert_eq!(find(&mut qe, &"joee".to_string(), regex).len(), 2); //"joe", "e"
     let regex = regexparser::parse("%s/(o*)o//g")?.find;
     let os = "ooooo";
-    let found = find(&os.to_string(), regex);
+    let mut qe = QueryEngine::build(&"ooooo".to_string(), Box::new(Clike{}), Box::new(Clike{}));
+    let found = find(&mut qe, &os.to_string(), regex);
     assert_eq!(found.len(), 1); //entire string
     assert_eq!(found.get(0).unwrap().get_group(1, &os.to_string()), "oooo");
     Ok(())
