@@ -54,10 +54,12 @@ replacements on a given line.
 #### Locations
 A location can be one of several things:  
  - `%` - anywhere in any file the path specifier includes  
- - `<path_suffix>:` - anywhere in any file whose path ends in path_suffix  
- - `(function):` - anywhere in any file within a function named function  
- - `cA-B:` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
- - `lA-B:` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
+ - `<path_suffix>` - anywhere in any file whose path ends in path_suffix  
+ - `{function}` - anywhere in any file within a function named function  
+ - `cA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
+ - `lA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
+
+Locations can also be grouped using parens, or unioned or intersected with | and &.
 
 #### Regex
 Regexes follow standard `sed`like syntax, and support the following operations:  

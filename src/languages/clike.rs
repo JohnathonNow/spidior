@@ -254,6 +254,7 @@ fn test_replace_whole() {
     let expected = std::fs::read_to_string(d).unwrap();
     assert_eq!(
         crate::nfa::replacer::replace(
+            &"".into(),
             &text,
             crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap(),
             |_, _| true

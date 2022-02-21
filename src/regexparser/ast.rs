@@ -19,6 +19,8 @@
 //!<set-item> 	::= 	<range> | <char>
 //!<query-items>        ::=         <query> | <query> <query-items>
 //!<range> 	::= 	<char> "-" <char>
+
+use crate::nfa::queryengine::QueryEngine;
 #[derive(Debug, Clone)]
 pub enum Union {
     O(Box<Regex>, Box<Simple>),
@@ -74,12 +76,12 @@ pub enum Group {
 
 #[derive(Debug, Clone)]
 pub enum Any {
-    O
+    O,
 }
 
 #[derive(Debug, Clone)]
 pub enum Eos {
-    O
+    O,
 }
 
 #[derive(Debug, Clone)]
@@ -92,7 +94,7 @@ pub enum Char {
 pub enum Set {
     Positive(Box<Positive>),
     Negative(Box<Negative>),
-    QuerySet(Box<QuerySet>,)
+    QuerySet(Box<QuerySet>),
 }
 
 #[derive(Debug, Clone)]
@@ -136,7 +138,7 @@ pub enum Queries {
 #[derive(Debug, Clone)]
 pub enum Query {
     Kv(String, String),
-    Fun
+    Fun,
 }
 #[derive(Debug, Clone)]
 pub enum Location {
@@ -144,9 +146,43 @@ pub enum Location {
     Function(String),
     LineRange(usize, usize),
     CharRange(usize, usize),
-    All
+    Or(Box<Location>, Box<Location>),
+    And(Box<Location>, Box<Location>),
+    All,
 }
 
+impl Location {
+    pub(crate) fn check(
+        &self,
+        input: &String,
+        start: usize,
+        path_name: &String,
+        qe: &QueryEngine,
+    ) -> bool {
+        match self {
+            crate::regexparser::ast::Location::Function(fun) => {
+                if let Some((fstart, fend)) = qe.function_location(fun) {
+                    start >= fstart && start < fend
+                } else {
+                    false
+                }
+            }
+            crate::regexparser::ast::Location::CharRange(cstart, cend) => {
+                start >= *cstart && start < *cend
+            }
+            crate::regexparser::ast::Location::LineRange(lstart, lend) => {
+                let line = input[1..start].matches('\n').count();
+                line >= *lstart && line < *lend
+            }
+            crate::regexparser::ast::Location::Path(suffix) => path_name.ends_with(suffix),
+            crate::regexparser::ast::Location::Or(l, r) => l.check(input, start, path_name, qe)
+                || r.check(input, start, path_name, qe),
+            crate::regexparser::ast::Location::And(l, r) => l.check(input, start, path_name, qe)
+                && r.check(input, start, path_name, qe),
+            _ => true,
+        }
+    }
+}
 #[derive(Debug, Clone)]
 pub enum ReplaceItem {
     String(String),
@@ -158,7 +194,7 @@ pub struct Replace {
     pub find: Box<Regex>,
     pub replace: Box<Replacement>,
     pub global: bool,
-    pub location: Box<Location>
+    pub location: Box<Location>,
 }
 
 #[derive(Debug, Clone)]
@@ -169,8 +205,7 @@ pub struct ReplaceUnparsed {
     pub global: bool,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Replacement {
-    pub replacements: Vec<ReplaceItem>
+    pub replacements: Vec<ReplaceItem>,
 }

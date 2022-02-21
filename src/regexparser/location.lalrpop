@@ -3,9 +3,16 @@ use crate::regexparser::ast::*;
 grammar;
 
 pub Location: Box<Location> = {
+    <r:RLocation> => r,
+    <l:Location> "|" <r:RLocation>  => Box::new(Location::Or(l, r)),
+    <l:Location> "&" <r:RLocation>  => Box::new(Location::And(l ,r)),
+};
+
+pub RLocation: Box<Location> = {
+    "(" <c:Location> ")" => c,
     "%" => Box::new(Location::All),
-    <s:r"<[^%:<>()]*>"> ":" => Box::new(Location::Path(s[1..s.len()-1].to_string())),
-    <s:r"\([^%:<>()]*\)"> ":" => Box::new(Location::Function(s[1..s.len()-1].to_string())),
-    "l" <s:r"[0-9]*"> "-" <e:r"[0-9]*"> ":" => Box::new(Location::LineRange(s.parse::<usize>().unwrap(), e.parse::<usize>().unwrap())),
-    "c" <s:r"[0-9]*"> "-" <e:r"[0-9]*"> ":" => Box::new(Location::CharRange(s.parse::<usize>().unwrap(), e.parse::<usize>().unwrap())),
+    <s:r"<[^%:<>(){}]*>"> => Box::new(Location::Path(s[1..s.len()-1].to_string())),
+    <s:r"\{[^%:<>(){}]*\}"> => Box::new(Location::Function(s[1..s.len()-1].to_string())),
+    "l" <s:r"[0-9]*"> "-" <e:r"[0-9]*"> => Box::new(Location::LineRange(s.parse::<usize>().unwrap(), e.parse::<usize>().unwrap())),
+    "c" <s:r"[0-9]*"> "-" <e:r"[0-9]*"> => Box::new(Location::CharRange(s.parse::<usize>().unwrap(), e.parse::<usize>().unwrap())),
 };
