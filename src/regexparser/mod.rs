@@ -87,10 +87,14 @@ fn parsing_query() {
 }
 #[test]
 fn parsing_location() {
-    assert!(location::LocationParser::new().parse("<../../../>:").is_ok());
-    assert!(location::LocationParser::new().parse("(function):").is_ok());
-    assert!(location::LocationParser::new().parse("l0-2:").is_ok());
-    assert!(location::LocationParser::new().parse("c0-2:").is_ok());
+    assert!(location::LocationParser::new().parse("<../../../>").is_ok());
+    assert!(location::LocationParser::new().parse("{function}").is_ok());
+    assert!(location::LocationParser::new().parse("{function}|l1-5").is_ok());
+    assert!(location::LocationParser::new().parse("{function}&l1-5").is_ok());
+    assert!(location::LocationParser::new().parse("^{function}|l1-5").is_ok());
+    assert!(location::LocationParser::new().parse("(^{function}|l1-5)").is_ok());
+    assert!(location::LocationParser::new().parse("l0-2").is_ok());
+    assert!(location::LocationParser::new().parse("c0-2").is_ok());
     assert!(location::LocationParser::new().parse("%").is_ok());
     assert!(location::LocationParser::new().parse("%:").is_err());
 }
@@ -99,5 +103,5 @@ fn parsing_location() {
 fn parsing_entire() {
     assert!(parse("%s/westoff/Westhoff").is_err());
     assert!(parse("%s/westoff/Westhoff/").is_ok());
-    assert!(parse("<mod.rs>:s/jon/John/g").is_ok());
+    assert!(parse("<mod.rs>s/jon/John/g").is_ok());
 }
