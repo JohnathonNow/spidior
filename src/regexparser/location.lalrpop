@@ -4,11 +4,12 @@ grammar;
 
 pub Location: Box<Location> = {
     <r:RLocation> => r,
+    "^" <r:RLocation> => Box::new(Location::Not(r)),
     <l:Location> "|" <r:RLocation>  => Box::new(Location::Or(l, r)),
     <l:Location> "&" <r:RLocation>  => Box::new(Location::And(l ,r)),
 };
 
-pub RLocation: Box<Location> = {
+RLocation: Box<Location> = {
     "(" <c:Location> ")" => c,
     "%" => Box::new(Location::All),
     <s:r"<[^%:<>(){}]*>"> => Box::new(Location::Path(s[1..s.len()-1].to_string())),

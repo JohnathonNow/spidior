@@ -148,6 +148,7 @@ pub enum Location {
     CharRange(usize, usize),
     Or(Box<Location>, Box<Location>),
     And(Box<Location>, Box<Location>),
+    Not(Box<Location>),
     All,
 }
 
@@ -179,6 +180,7 @@ impl Location {
                 || r.check(input, start, path_name, qe),
             crate::regexparser::ast::Location::And(l, r) => l.check(input, start, path_name, qe)
                 && r.check(input, start, path_name, qe),
+            crate::regexparser::ast::Location::Not(l) => !l.check(input, start, path_name, qe),
             _ => true,
         }
     }

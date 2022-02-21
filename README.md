@@ -59,7 +59,8 @@ A location can be one of several things:
  - `cA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) character in the file  
  - `lA-B` - anywhere in any file between the Ath (inclusive) and Bth (exclusive) line in the file  
 
-Locations can also be grouped using parens, or unioned or intersected with | and &.
+Locations can also be grouped using parens, unioned with `|`, intersected with `&`, and negated with `^`.
+Why ^ instead of !? Well I figured since sets in most regex interpreters use ^ for negation it made sense here.
 
 #### Regex
 Regexes follow standard `sed`like syntax, and support the following operations:  

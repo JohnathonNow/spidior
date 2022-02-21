@@ -503,7 +503,7 @@ checksum = "fa8f3741c7372e75519bd9346068370c9cdaabcc1f9599cbcf2a2719352286b7"
 
 [[package]]
 name = "spidior"
-version = "0.1.1"
+version = "0.2.1"
 dependencies = [
  "clap",
  "lalrpop",
