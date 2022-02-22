@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use languages::clike::Clike;
 use languages::parsing::*;
 use std::{error::Error, fs};
@@ -16,8 +16,8 @@ mod regexparser;
 
 use crate::regex2nfa::build_nfa;
 
-#[derive(Clap)]
-#[clap(version = "0.1.1", author = "John Westhoff <johnjwesthoff@gmail.com>")]
+#[derive(Parser)]
+#[clap(version = "0.2.2", author = "John Westhoff <johnjwesthoff@gmail.com>")]
 struct Opts {
     /// The path to the files we are reading
     #[clap(short, long, default_value = ".")]
