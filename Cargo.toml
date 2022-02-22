@@ -1,6 +1,6 @@
 [package]
 name = "spidior"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["John Westhoff <johnwesthoff@nyu.edu>"]
 description = "A tool for handling sed-like substitution tasks where pesky source code semantics are getting in the way."
 edition = "2018"

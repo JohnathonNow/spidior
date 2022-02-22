@@ -20,7 +20,9 @@
 //!<query-items>        ::=         <query> | <query> <query-items>
 //!<range> 	::= 	<char> "-" <char>
 
-use crate::nfa::queryengine::QueryEngine;
+use crate::nfa::{queryengine::QueryEngine, matcher::find};
+
+use super::reg;
 #[derive(Debug, Clone)]
 pub enum Union {
     O(Box<Regex>, Box<Simple>),
@@ -158,7 +160,7 @@ impl Location {
         input: &String,
         start: usize,
         path_name: &String,
-        qe: &QueryEngine,
+        qe: &mut QueryEngine,
     ) -> bool {
         match self {
             crate::regexparser::ast::Location::Function(fun) => {
@@ -175,13 +177,37 @@ impl Location {
                 let line = input[1..start].matches('\n').count();
                 line >= *lstart && line < *lend
             }
-            crate::regexparser::ast::Location::Path(suffix) => path_name.ends_with(suffix),
+            crate::regexparser::ast::Location::Path(regex_str) => {
+                let regex = reg::RegexParser::new()
+                .parse(regex_str)
+                .map_err(|_| "Failed to parse regex").unwrap();
+                find(qe, path_name, regex).len() > 0
+            },
             crate::regexparser::ast::Location::Or(l, r) => l.check(input, start, path_name, qe)
                 || r.check(input, start, path_name, qe),
             crate::regexparser::ast::Location::And(l, r) => l.check(input, start, path_name, qe)
                 && r.check(input, start, path_name, qe),
             crate::regexparser::ast::Location::Not(l) => !l.check(input, start, path_name, qe),
             _ => true,
+        }
+    }
+    pub(crate) fn get_filenames(&self, v: &mut Vec<String>) {
+        match self {
+            crate::regexparser::ast::Location::Path(suffix) => {
+                v.push(suffix.clone());
+            }
+            crate::regexparser::ast::Location::Or(l, r) => {
+                l.get_filenames(v);
+                r.get_filenames(v);
+            }
+            crate::regexparser::ast::Location::And(l, r) => {
+                l.get_filenames(v);
+                r.get_filenames(v);
+            }
+            crate::regexparser::ast::Location::Not(r) => {
+                r.get_filenames(v);
+            }
+            _ => (),
         }
     }
 }

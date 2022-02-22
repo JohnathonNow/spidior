@@ -259,7 +259,7 @@ fn test_replace_whole() {
             crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap(),
             |_, _| true
         )
-        .unwrap(),
+        .unwrap().0,
         expected
     );
 }

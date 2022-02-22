@@ -46,6 +46,20 @@ pub fn parse(text: &str) -> Result<ast::Replace, Box<dyn Error>> {
     })
 }
 
+pub fn parse_rename(fromname: &str, rename: &str) -> Result<ast::Replace, Box<dyn Error>> {
+    let location = Box::new(ast::Location::All);
+    let find = reg::RegexParser::new()
+        .parse(fromname)
+        .map_err(|_| "Failed to parse filename regex")?;
+    let replace = parsereplacement::parse(rename)?;
+    Ok(Replace {
+        location,
+        find,
+        replace: Box::new(replace),
+        global: true,
+    })
+}
+
 pub fn parse_set(s: String) -> Box<Items> {
     set::ItemsParser::new().parse(&s).unwrap()
 }
