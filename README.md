@@ -7,6 +7,8 @@ Status
 ------
 ![Build Status](https://github.com/JohnathonNow/spidior/workflows/Rust/badge.svg)
 
+Note `spidior` is still a very early stage project, so it should ***NOT*** be used without backing up files first.
+
 Building
 --------
 
@@ -19,24 +21,25 @@ Running
 The following is the --help output for `spidior`, which shows you how to run it.
 
 ```
-spidior 0.1.1
+spidior 0.2.3
 John Westhoff <johnjwesthoff@gmail.com>
 
 USAGE:
-    spidior [FLAGS] [OPTIONS]
+    spidior [OPTIONS]
 
 FLAGS:
-    -d, --dump        Whether we should just dump info without replacing
-    -h, --help        Prints help information
-    -i, --in-place    Whether we should edit files in place or print to stdout
-    -I, --interactive Whether we are are interactively replacing things or not
-    -n, --nfa         Whether we should print info about the regex nfa
-    -r, --recursive   Whether we should search recursively
-    -V, --version     Prints version information
 
 OPTIONS:
-    -p, --path <path>    The path to the files we are reading [default: .]
-    -q, --query <query>  The query string for find/replace for each file we find in the input, required if `dump` is not set
+    -p, --path <path>      The path to the files we are reading [default: .]
+    -q, --query <query>    The query string for find/replace for each file we find in the input, required if `dump` is not set
+    -R, --rename <RENAME>  Optional regex for renaming files with any matches
+    -d, --dump             Whether we should just dump info without replacing
+    -h, --help             Prints help information
+    -i, --in-place         Whether we should edit files in place or print to stdout
+    -I, --interactive      Whether we are are interactively replacing things or not
+    -n, --nfa              Whether we should print info about the regex nfa
+    -r, --recursive        Whether we should search recursively
+    -V, --version          Prints version information
 
 ```
 
@@ -73,6 +76,19 @@ Regexes follow standard `sed`like syntax, and support the following operations:
 
 #### Replacements
 A replacement is a string literal that may include backreferences to groups using a backslash followed by a number.
+
+Renaming
+--------
+
+In addition to editing files, potentially in place, `spidior` allows for renaming files through the same
+substitution commands it can run on text. By passing a `--rename REPLACEMENT` option, any file who
+matches the provided query will be renamed to REPLACEMENT. The REPLACEMENT string can use backreferences
+to path locations in the Location portion of the query. For instance, to rename any file ending in .java,
+one could write:
+
+`spidior -q '<(.*)\.java>s///' --rename '\1_renamed.java'
+
+which will rename every file ending in '.java' to instead end in '_renamed.java'.
 
 Example
 -------
