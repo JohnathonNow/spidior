@@ -33,10 +33,15 @@ pub fn parse(text: &str) -> Result<ast::Replace, Box<dyn Error>> {
     let ru = parsecommand::parse(text)?;
     let location = location::LocationParser::new()
         .parse(&ru.location)
-        .map_err(|_| "Failed to parse location")?;
-    let find = reg::RegexParser::new()
+        .map_err(|x| format!("Failed to parse location: {}", x))?;
+    let find = if ru.find.is_empty() {
+        Box::new(ast::Regex::Simple(Box::new(ast::Simple::Basic(Box::new(ast::Basic::Elementary(Box::new(ast::Elementary::Nothing)))))))
+
+    } else {
+        reg::RegexParser::new()
         .parse(&ru.find)
-        .map_err(|_| "Failed to parse regex")?;
+        .map_err(|x| format!("Failed to parse regex: {}", x))?
+    };
     let replace = parsereplacement::parse(&ru.replace)?;
     Ok(Replace {
         location,
@@ -50,7 +55,7 @@ pub fn parse_rename(fromname: &str, rename: &str) -> Result<ast::Replace, Box<dy
     let location = Box::new(ast::Location::All);
     let find = reg::RegexParser::new()
         .parse(fromname)
-        .map_err(|_| "Failed to parse filename regex")?;
+        .map_err(|x| format!("Failed to parse filename regex: {}", x))?;
     let replace = parsereplacement::parse(rename)?;
     Ok(Replace {
         location,

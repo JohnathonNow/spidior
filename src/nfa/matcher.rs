@@ -64,6 +64,10 @@ pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Matc
         }
         is += 1;
     }
+    if nfa.nodes.len() == 1 {
+        // Handle special case of empty regex
+        v.push(Match::new(1, 0, vec![]));
+    }
     v
 }
 

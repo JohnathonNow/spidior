@@ -9,6 +9,7 @@ use std::{
 
 #[cfg(test)]
 use queryengine::QueryEngine;
+use serde::{Deserialize, Serialize};
 
 type Atom = char;
 
@@ -16,7 +17,7 @@ pub mod matcher;
 pub mod replacer;
 pub mod queryengine;
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 enum TransitionType {
     Epsilon,
     Alpha(Atom),
@@ -25,15 +26,15 @@ enum TransitionType {
     QuerySetRange(String),
     Open(usize),
     Close(usize),
+    Any,
 }
 
-#[derive(Debug, Clone)]
-
+#[derive(Serialize, Deserialize, Debug, Clone)]
 enum NodeType {
     Normal,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Transition {
     kind: TransitionType,
     dest: NodePointer,
@@ -44,7 +45,7 @@ impl Transition {
         Self { kind, dest }
     }
 }
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NodePointer {
     id: usize,
 }
@@ -54,7 +55,7 @@ impl NodePointer {
         Self { id }
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Node {
     transitions: Vec<Transition>,
     nt: NodeType,
@@ -69,7 +70,7 @@ impl Node {
 }
 
 /// Represents a non-deterministic finite automaton
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Nfa {
     nodes: Vec<Node>,
     index: usize,
@@ -158,6 +159,15 @@ impl Nfa {
         self.add_transition(from, Transition::new(TransitionType::Alpha(on), *to))
     }
 
+    pub fn add_transition_any(
+        &mut self,
+        from: &NodePointer,
+        to: &NodePointer,
+    ) -> Result<(), Box<dyn Error>> {
+        self.add_transition(from, Transition::new(TransitionType::Any, *to))
+    }
+
+
     pub fn add_transition_epsilon(
         &mut self,
         from: &NodePointer,
@@ -239,6 +249,9 @@ impl Context {
                 for t in &node.transitions {
                     match &t.kind {
                         TransitionType::Alpha(c) if *c == input => {
+                            nodes.insert(t.dest);
+                        }
+                        TransitionType::Any => {
                             nodes.insert(t.dest);
                         }
                         TransitionType::Range(s) if s.contains(input) => {

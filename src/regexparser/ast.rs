@@ -69,6 +69,7 @@ pub enum Elementary {
     Eos(Box<Eos>),
     Char(Box<Char>),
     Set(Box<Set>),
+    Nothing,
 }
 
 #[derive(Debug, Clone)]

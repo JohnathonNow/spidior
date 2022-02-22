@@ -58,10 +58,11 @@ fn do_concat(r: Box<Concatenation>, nfa: &mut Nfa) -> (NodePointer, NodePointer)
 fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     match *r {
         Elementary::Group(r) => do_group(r, nfa),
-        Elementary::Any(_) => unimplemented!(),
+        Elementary::Any(_) => do_any(nfa),
         Elementary::Eos(_) => unimplemented!(),
         Elementary::Char(r) => do_char(r, nfa),
         Elementary::Set(r) => do_set(r, nfa),
+        Elementary::Nothing =>  do_nothing(nfa),
     }
 }
 
@@ -80,6 +81,19 @@ fn do_plus(r: Box<Plus>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     nfa.add_transition_epsilon(&dst, &src).unwrap();
     (src, dst)
 }
+
+fn do_nothing(nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let src = nfa.new_node();
+    (src, src)
+}
+
+fn do_any(nfa: &mut Nfa) -> (NodePointer, NodePointer) {
+    let src = nfa.new_node();
+    let dst = nfa.new_node();
+    nfa.add_transition_any(&src, &dst).unwrap();
+    (src, dst)
+}
+
 
 fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let src = nfa.new_node();
