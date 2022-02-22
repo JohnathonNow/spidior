@@ -2,7 +2,12 @@
 name = "spidior"
 version = "0.2.1"
 authors = ["John Westhoff <johnwesthoff@nyu.edu>"]
+description = "A tool for handling sed-like substitution tasks where pesky source code semantics are getting in the way."
 edition = "2018"
+license = "GPL-3.0"
+repository = "https://github.com/JohnathonNow/spidior"
+keywords = ["tools", "regex", "sed"]
+categories = ["command-line-utilities", "development-tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
