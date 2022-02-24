@@ -43,14 +43,14 @@ impl Match {
 pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let (nfa, start, end) = build_nfa(regex);
-    let mut ctx0 = Context::new(HashSet::new());
-    ctx0.add_epsilons(vec![start].into_iter().collect(), &nfa);
+    let mut ctx = Context::new(HashSet::new());
     let mut is = 0;
     while is < input.len() {
+        ctx.reset();
+        ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
         let mut new = None;
-        let mut ctx = ctx0.clone();
         let mut i = is;
-        while i < input.len() {
+        while i < input.len() && ctx.nodes.len() > 0 {
             let c = input.chars().nth(i).unwrap();
             qe.set_offset(is);
             i = is + ctx.step(&nfa, c, &qe);

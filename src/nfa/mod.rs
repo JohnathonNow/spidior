@@ -223,6 +223,12 @@ impl Context {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.groups.clear();
+        self.index = 0;
+        self.nodes.clear();
+    }
+
     pub fn contains(&self, i: &NodePointer) -> bool {
         return self.nodes.contains(i);
     }

@@ -206,6 +206,9 @@ impl Identifiers for Clike {
                             s = IFsm::NONE;
                         }
                         n2e = i;
+                        if n1s > n1e || n2s > n2e {
+                            continue;
+                        }
                         let name = text[n2s..n2e].to_string();
                         let typ = text[n1s..n1e].to_string();
                         if Self::is_allowed(name.as_ref()) && Self::is_allowed(typ.as_ref()) {
