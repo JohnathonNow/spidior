@@ -2,7 +2,7 @@
 //! Nondeterministic Finite Automata
 
 use std::{
-    collections::{HashSet},
+    collections::{HashSet, HashMap},
     error::Error,
     hash::Hash,
 };
@@ -32,6 +32,7 @@ enum TransitionType {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum NodeType {
     Normal,
+    Accept,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -66,6 +67,9 @@ impl Node {
             transitions: Vec::new(),
             nt: NodeType::Normal,
         }
+    }
+    fn set_type(&mut self, nt: NodeType) {
+        self.nt = nt;
     }
 }
 
@@ -199,7 +203,86 @@ impl Nfa {
         node.transitions.push(to);
         Ok(())
     }
+    pub fn e_closure(&self, start: usize) -> Vec<usize> {
+        let mut visited = HashSet::new();
+        let mut stack = vec![start];
+        while let Some(node) = stack.pop() {
+            if visited.contains(&node) {
+                continue;
+            }
+            visited.insert(node);
+            for transition in self.nodes[node].transitions.iter() {
+                match transition.kind {
+                    TransitionType::Epsilon => {
+                        stack.push(transition.dest.id);
+                    }
+                    _ => {}
+                }
+            }
+        }
+        let mut v: Vec<usize> = visited.into_iter().collect();
+        v.sort();
+        v
+    }
+
+    fn set_node_type(&mut self, node: NodePointer, nt: NodeType) {
+        self.nodes[node.id].set_type(nt);
+    }
+
+    pub fn accepts(&self, nodes: &HashSet<NodePointer>) -> bool {
+        for i in nodes {
+            if let NodeType::Accept = self.nodes[i.id].nt {
+                return true;
+            }
+        }
+        false
+    }
+
 }
+pub fn get_new_state(old_nfa: &Nfa, dfa: &mut Nfa, e_closure_map: &mut HashMap<Vec<usize>, NodePointer>, start: usize, old_end: usize) -> (NodePointer, Vec<usize>) {
+    let e = old_nfa.e_closure(start);
+     if let Some(i) = e_closure_map.get(&e) {
+        return (*i, e);
+     } else {
+        let new_node = dfa.new_node();
+        if e.contains(&old_end) {
+            dfa.set_node_type(new_node, NodeType::Accept);
+        }
+        e_closure_map.insert(e.clone(), new_node);
+        return (new_node, e);
+     }
+}
+pub fn nfa_to_dfa(nfa: &Nfa, start: &NodePointer, end: &NodePointer) -> (Nfa, NodePointer, NodePointer) {
+    let mut e_closure_map: HashMap<Vec<usize>, NodePointer> = HashMap::new();
+    let mut visited = HashSet::new();
+    let mut dfa = Nfa::new(Vec::new());
+    let mut frontier = nfa.e_closure(start.id);
+    let (startnode, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, start.id, end.id);
+    while let Some(i) = frontier.pop() {
+        if visited.contains(&i) {
+            continue;
+        }
+        visited.insert(i);
+        let (new_node, e) = get_new_state(nfa, &mut dfa, &mut e_closure_map, i, end.id);
+        for j in e {
+            for transition in nfa.nodes[j].transitions.iter() {
+                match &transition.kind {
+                    TransitionType::Epsilon => {
+                    },
+                    x => {
+                        let (to, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, transition.dest.id, end.id);
+                        dfa.add_transition(&new_node, Transition::new(x.clone(), to)).unwrap();
+                    }
+                }
+                frontier.push(transition.dest.id);
+            }   
+        }
+    }
+    let (endnode, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, end.id, end.id);
+
+    (dfa, startnode, endnode)
+}
+
 
 #[derive(Debug, Clone)]
 pub struct Group {

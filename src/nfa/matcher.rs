@@ -7,6 +7,8 @@ use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
 #[cfg(test)]
 use crate::languages::clike::Clike;
+
+use super::nfa_to_dfa;
 #[derive(Debug)]
 pub struct Match {
     start: usize,
@@ -42,8 +44,12 @@ impl Match {
 
 pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
-    let (nfa, start, end) = build_nfa(regex);
+    let o = build_nfa(regex);
+    let (nfa, start, end) = nfa_to_dfa(&o.0, &o.1, &o.2);
     let mut ctx = Context::new(HashSet::new());
+    eprintln!("NFA is `{}`", serde_json::to_string(&o.0).unwrap());
+    eprintln!("DFA is `{}`", serde_json::to_string(&nfa).unwrap());
+
     let mut is = 0;
     while is < input.len() {
         ctx.reset();
@@ -54,7 +60,7 @@ pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Matc
             let c = input.chars().nth(i).unwrap();
             qe.set_offset(is);
             i = is + ctx.step(&nfa, c, &qe);
-            if ctx.contains(&end) {
+            if nfa.accepts(&ctx.nodes) {
                 new = Some(Match::new(is, i - is, ctx.groups.clone()));
             }
         }
@@ -63,10 +69,6 @@ pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Matc
             v.push(x);
         }
         is += 1;
-    }
-    if nfa.nodes.len() == 1 {
-        // Handle special case of empty regex
-        v.push(Match::new(1, 0, vec![]));
     }
     v
 }
