@@ -2,7 +2,7 @@
 //! Nondeterministic Finite Automata
 
 use std::{
-    collections::{HashSet, HashMap},
+    collections::{HashMap, HashSet, LinkedList},
     error::Error,
     hash::Hash,
 };
@@ -11,11 +11,12 @@ use std::{
 use queryengine::QueryEngine;
 use serde::{Deserialize, Serialize};
 
+use crate::{languages::clike::Clike, regex2nfa::build_nfa};
 type Atom = char;
 
 pub mod matcher;
-pub mod replacer;
 pub mod queryengine;
+pub mod replacer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum TransitionType {
@@ -29,7 +30,7 @@ enum TransitionType {
     Any,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 enum NodeType {
     Normal,
     Accept,
@@ -171,7 +172,6 @@ impl Nfa {
         self.add_transition(from, Transition::new(TransitionType::Any, *to))
     }
 
-
     pub fn add_transition_epsilon(
         &mut self,
         from: &NodePointer,
@@ -237,22 +237,31 @@ impl Nfa {
         }
         false
     }
-
 }
-pub fn get_new_state(old_nfa: &Nfa, dfa: &mut Nfa, e_closure_map: &mut HashMap<Vec<usize>, NodePointer>, start: usize, old_end: usize) -> (NodePointer, Vec<usize>) {
+pub fn get_new_state(
+    old_nfa: &Nfa,
+    dfa: &mut Nfa,
+    e_closure_map: &mut HashMap<Vec<usize>, NodePointer>,
+    start: usize,
+    old_end: usize,
+) -> (NodePointer, Vec<usize>) {
     let e = old_nfa.e_closure(start);
-     if let Some(i) = e_closure_map.get(&e) {
+    if let Some(i) = e_closure_map.get(&e) {
         return (*i, e);
-     } else {
+    } else {
         let new_node = dfa.new_node();
         if e.contains(&old_end) {
             dfa.set_node_type(new_node, NodeType::Accept);
         }
         e_closure_map.insert(e.clone(), new_node);
         return (new_node, e);
-     }
+    }
 }
-pub fn nfa_to_dfa(nfa: &Nfa, start: &NodePointer, end: &NodePointer) -> (Nfa, NodePointer, NodePointer) {
+pub fn nfa_to_dfa(
+    nfa: &Nfa,
+    start: &NodePointer,
+    end: &NodePointer,
+) -> (Nfa, NodePointer, NodePointer) {
     let mut e_closure_map: HashMap<Vec<usize>, NodePointer> = HashMap::new();
     let mut visited = HashSet::new();
     let mut dfa = Nfa::new(Vec::new());
@@ -267,15 +276,21 @@ pub fn nfa_to_dfa(nfa: &Nfa, start: &NodePointer, end: &NodePointer) -> (Nfa, No
         for j in e {
             for transition in nfa.nodes[j].transitions.iter() {
                 match &transition.kind {
-                    TransitionType::Epsilon => {
-                    },
+                    TransitionType::Epsilon => {}
                     x => {
-                        let (to, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, transition.dest.id, end.id);
-                        dfa.add_transition(&new_node, Transition::new(x.clone(), to)).unwrap();
+                        let (to, _) = get_new_state(
+                            nfa,
+                            &mut dfa,
+                            &mut e_closure_map,
+                            transition.dest.id,
+                            end.id,
+                        );
+                        dfa.add_transition(&new_node, Transition::new(x.clone(), to))
+                            .unwrap();
                     }
                 }
                 frontier.push(transition.dest.id);
-            }   
+            }
         }
     }
     let (endnode, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, end.id, end.id);
@@ -283,6 +298,104 @@ pub fn nfa_to_dfa(nfa: &Nfa, start: &NodePointer, end: &NodePointer) -> (Nfa, No
     (dfa, startnode, endnode)
 }
 
+#[derive(Debug, Clone)]
+pub enum Path {
+    Open(usize),
+    Close(usize),
+    Char,
+    Query(usize)
+}
+
+pub fn find_path(
+    qe: &mut crate::nfa::queryengine::QueryEngine,
+    input: &String,
+    index: usize,
+    nfa: &Nfa,
+    node: NodePointer,
+    path: &mut Vec<Path>,
+) -> bool {
+    if let Some(cur_char) = input.chars().nth(index) {
+        let mut longest_path: Option<Vec<Path>> = None;
+        for transition in nfa.nodes[node.id].transitions.iter() {
+            let mut new_path = Vec::new();
+            let b = match &transition.kind {
+                TransitionType::Alpha(c) => {
+                    if *c == cur_char {
+                        new_path.push(Path::Char);
+                        find_path(qe, input, index + 1, nfa, transition.dest, &mut new_path)
+                    } else {
+                        nfa.nodes[node.id].nt == NodeType::Accept
+                    }
+                }
+                TransitionType::Any => {
+                    new_path.push(Path::Char);
+                    find_path(qe, input, index + 1, nfa, transition.dest, &mut new_path)
+                }
+                TransitionType::NegativeRange(s) => {
+                    if !s.contains(cur_char) {
+                        new_path.push(Path::Char);
+                        find_path(qe, input, index + 1, nfa, transition.dest, &mut new_path)
+                    } else {
+                        nfa.nodes[node.id].nt == NodeType::Accept
+                    }
+                }
+                TransitionType::Range(s) => {
+                    if s.contains(cur_char) {
+                        new_path.push(Path::Char);
+                        find_path(qe, input, index + 1, nfa, transition.dest, &mut new_path)
+                    } else {
+                        nfa.nodes[node.id].nt == NodeType::Accept
+                    }
+                }
+                TransitionType::Open(i) => {
+                    new_path.push(Path::Open(*i));
+                    find_path(qe, input, index, nfa, transition.dest, &mut new_path)
+                }
+                TransitionType::Close(i) => {
+                    new_path.push(Path::Close(*i));
+                    find_path(qe, input, index, nfa, transition.dest, &mut new_path)
+                }
+                TransitionType::QuerySetRange(s) => {
+                    if let Some(x) = qe.query(index, s) {
+                        new_path.push(Path::Query(x));
+                        find_path(qe, input, index + x, nfa, transition.dest, &mut new_path)
+                    } else {
+                        nfa.nodes[node.id].nt == NodeType::Accept
+                    }
+                }
+                _ => nfa.nodes[node.id].nt == NodeType::Accept,
+            };
+            if b {
+                if let Some(lp) = &longest_path {
+                    if new_path.len() > lp.len() {
+                        longest_path = Some(new_path);
+                    }
+                } else {
+                    longest_path = Some(new_path);
+                }
+            }
+        }
+        if let Some(lp) = &mut longest_path {
+            path.append(lp);
+            true
+        } else {
+            nfa.nodes[node.id].nt == NodeType::Accept
+        }
+    } else {
+        for transition in nfa.nodes[node.id].transitions.iter() {
+            match &transition.kind {
+                TransitionType::Close(i) => {
+                    if nfa.nodes[transition.dest.id].nt == NodeType::Accept {
+                        path.push(Path::Close(*i));
+                        return true;
+                    }
+                }
+                _ => {}
+            }
+        }
+        nfa.nodes[node.id].nt == NodeType::Accept
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Group {
@@ -351,7 +464,6 @@ impl Context {
                         }
                         TransitionType::QuerySetRange(s) => {
                             if let Some(x) = q.query(self.index, s) {
-                                //println!("{}", self.index);
                                 self.index = x - 1;
                                 nodes.insert(t.dest);
                             }

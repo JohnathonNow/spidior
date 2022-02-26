@@ -101,7 +101,7 @@ impl QueryEngine {
                 None => true,
             } && position + self.offset == ident.start
             {
-                return Some(ident.end - self.offset);
+                return Some(ident.end - ident.start);
             }
         }
         None
