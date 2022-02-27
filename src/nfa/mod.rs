@@ -18,7 +18,7 @@ pub mod matcher;
 pub mod queryengine;
 pub mod replacer;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 enum TransitionType {
     Epsilon,
     Alpha(Atom),
@@ -36,7 +36,7 @@ enum NodeType {
     Accept,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 struct Transition {
     kind: TransitionType,
     dest: NodePointer,
@@ -228,15 +228,6 @@ impl Nfa {
     fn set_node_type(&mut self, node: NodePointer, nt: NodeType) {
         self.nodes[node.id].set_type(nt);
     }
-
-    pub fn accepts(&self, nodes: &HashSet<NodePointer>) -> bool {
-        for i in nodes {
-            if let NodeType::Accept = self.nodes[i.id].nt {
-                return true;
-            }
-        }
-        false
-    }
 }
 pub fn get_new_state(
     old_nfa: &Nfa,
@@ -285,8 +276,10 @@ pub fn nfa_to_dfa(
                             transition.dest.id,
                             end.id,
                         );
-                        dfa.add_transition(&new_node, Transition::new(x.clone(), to))
-                            .unwrap();
+                        let trans = Transition::new(x.clone(), to);
+                        if !dfa.nodes[new_node.id].transitions.contains(&trans) {
+                            dfa.add_transition(&new_node, trans).unwrap();
+                        }
                     }
                 }
                 frontier.push(transition.dest.id);
@@ -370,6 +363,9 @@ pub fn find_path(
                     if new_path.len() > lp.len() {
                         longest_path = Some(new_path);
                     }
+                    //path.append(&mut new_path);
+                    //return true;
+
                 } else {
                     longest_path = Some(new_path);
                 }

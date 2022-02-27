@@ -99,7 +99,6 @@ pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Matc
     v
 }
 
-#[ignore]
 #[test]
 fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     use crate::regexparser;
