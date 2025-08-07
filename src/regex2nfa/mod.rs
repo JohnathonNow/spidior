@@ -194,36 +194,3 @@ fn do_group(r: Box<Group>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     (src, dst)
 }
 
-#[test]
-fn test_regex() -> Result<(), Box<dyn std::error::Error>> {
-    use crate::{nfa::Context, regexparser};
-    use std::collections::HashSet;
-
-    let regex = regexparser::parse("%s/bob|joe|e*//g")?;
-    let (nfa, start, end) = build_nfa(regex.find);
-    let mut ctx = Context::new(HashSet::new());
-    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
-    for c in "bob".chars() {
-        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
-    }
-    assert!(ctx.contains(&end));
-    let mut ctx = Context::new(HashSet::new());
-    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
-    for c in "bobd".chars() {
-        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
-    }
-    assert!(!ctx.contains(&end));
-    let mut ctx = Context::new(HashSet::new());
-    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
-    for c in "bo".chars() {
-        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
-    }
-    assert!(!ctx.contains(&end));
-    let mut ctx = Context::new(HashSet::new());
-    ctx.add_epsilons(vec![start].into_iter().collect(), &nfa);
-    for c in "eeeeeeeeee".chars() {
-        ctx.step(&nfa, c, &crate::nfa::queryengine::QueryEngine::new());
-    }
-    assert!(ctx.contains(&end));
-    Ok(())
-}

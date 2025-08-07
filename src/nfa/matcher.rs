@@ -1,14 +1,12 @@
-use std::collections::{HashSet, LinkedList};
-
 #[cfg(test)]
 use crate::languages::clike::Clike;
 use crate::nfa::queryengine::QueryEngine;
 use crate::nfa::Group;
-use crate::nfa::{find_path, Context};
+use crate::nfa::{find_path};
 use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
 
-use super::{nfa_to_dfa, Nfa, NodePointer};
+use super::{nfa_to_dfa};
 #[derive(Debug)]
 pub struct Match {
     start: usize,
@@ -75,22 +73,26 @@ fn path_to_matches(path: &Vec<crate::nfa::Path>, start: usize) -> Match {
     Match::new(start, len, groups)
 }
 
+use std::collections::HashMap;
 pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let o = build_nfa(regex);
-    let (nfa, start, end) = nfa_to_dfa(&o.0, &o.1, &o.2);
+    let (nfa, start, _end) = nfa_to_dfa(&o.0, &o.1, &o.2);
     let mut is = 0;
+    let mut cache = HashMap::new();
     while is <= input.len() {
         let mut path = Vec::new();
-        //qe.set_offset(is);
-        if find_path(qe, input, is, &nfa, start, &mut path) {
+        if find_path(qe, input, is, &nfa, start, &mut path, &mut cache) {
             let m = path_to_matches(&path, is);
-            is += m.len;
-            if m.len > 0 {
-                v.push(m);
-            } else {
+            if m.len() == 0 {
                 is += 1;
+                if is > input.len() {
+                    break;
+                }
+                continue;
             }
+            is += m.len();
+            v.push(m);
         } else {
             is += 1;
         }

@@ -15,7 +15,7 @@ mod nfa;
 mod regex2nfa;
 mod regexparser;
 
-use crate::{regex2nfa::build_nfa, nfa::nfa_to_dfa};
+use crate::{regex2nfa::build_nfa};
 
 #[derive(Parser)]
 #[clap(version = "0.2.3", author = "John Westhoff <johnjwesthoff@gmail.com>")]
@@ -98,8 +98,7 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         );
     }
     if opts.nfa {
-        let (nfa, start, end) = build_nfa(replace.clone().find);
-        let (nfa, _, _) = nfa_to_dfa(&nfa, &start, &end);
+        let (nfa, _start, _end) = build_nfa(replace.clone().find);
         eprintln!("NFA is `{}`", serde_json::to_string(&nfa).unwrap());
     }
 
