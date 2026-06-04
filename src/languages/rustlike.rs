@@ -1,4 +1,4 @@
-//! Provides the parser for "rust-like" languagescd 
+//! Provides the parser for "rust-like" languagescd
 
 use super::parsing::{Function, Functions, Identifier, Identifiers};
 
@@ -21,7 +21,6 @@ impl Functions for Rustlike {
     }
 }
 
-
 impl Identifiers for Rustlike {
     /// Parses out identifier uses from rust-like code
     ///
@@ -35,6 +34,5 @@ impl Identifiers for Rustlike {
     /// an identifier declared within the code
     fn read_identifiers(&self, _text: &str) -> Vec<Identifier> {
         todo!("implement this");
-
     }
 }

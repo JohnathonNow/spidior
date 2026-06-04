@@ -20,7 +20,7 @@
 //!<query-items>        ::=         <query> | <query> <query-items>
 //!<range> 	::= 	<char> "-" <char>
 
-use crate::nfa::{queryengine::QueryEngine, matcher::find};
+use crate::nfa::{matcher::find, queryengine::QueryEngine};
 
 use super::reg;
 #[derive(Debug, Clone)]
@@ -180,14 +180,17 @@ impl Location {
             }
             crate::regexparser::ast::Location::Path(regex_str) => {
                 let regex = reg::RegexParser::new()
-                .parse(regex_str)
-                .map_err(|_| "Failed to parse regex").unwrap();
-                find(qe, path_name, regex).len() > 0
-            },
-            crate::regexparser::ast::Location::Or(l, r) => l.check(input, start, path_name, qe)
-                || r.check(input, start, path_name, qe),
-            crate::regexparser::ast::Location::And(l, r) => l.check(input, start, path_name, qe)
-                && r.check(input, start, path_name, qe),
+                    .parse(regex_str)
+                    .map_err(|_| "Failed to parse regex")
+                    .unwrap();
+                !find(qe, path_name, regex).is_empty()
+            }
+            crate::regexparser::ast::Location::Or(l, r) => {
+                l.check(input, start, path_name, qe) || r.check(input, start, path_name, qe)
+            }
+            crate::regexparser::ast::Location::And(l, r) => {
+                l.check(input, start, path_name, qe) && r.check(input, start, path_name, qe)
+            }
             crate::regexparser::ast::Location::Not(l) => !l.check(input, start, path_name, qe),
             _ => true,
         }

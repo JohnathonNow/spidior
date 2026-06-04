@@ -2,7 +2,7 @@
 //! Nondeterministic Finite Automata
 
 use std::{
-    collections::{HashMap, HashSet, LinkedList},
+    collections::{HashMap, HashSet},
     error::Error,
     hash::Hash,
 };
@@ -11,7 +11,6 @@ use std::{
 use queryengine::QueryEngine;
 use serde::{Deserialize, Serialize};
 
-use crate::{languages::clike::Clike, regex2nfa::build_nfa};
 type Atom = char;
 
 pub mod matcher;
@@ -22,6 +21,7 @@ pub mod replacer;
 enum TransitionType {
     Epsilon,
     Alpha(Atom),
+    String(Vec<char>),
     Range(String),
     NegativeRange(String),
     QuerySetRange(String),
@@ -212,11 +212,8 @@ impl Nfa {
             }
             visited.insert(node);
             for transition in self.nodes[node].transitions.iter() {
-                match transition.kind {
-                    TransitionType::Epsilon => {
-                        stack.push(transition.dest.id);
-                    }
-                    _ => {}
+                if transition.kind == TransitionType::Epsilon {
+                    stack.push(transition.dest.id);
                 }
             }
         }
@@ -228,6 +225,68 @@ impl Nfa {
     fn set_node_type(&mut self, node: NodePointer, nt: NodeType) {
         self.nodes[node.id].set_type(nt);
     }
+
+    pub fn optimize(&mut self, start: usize, end: usize) {
+        for i in 0..self.nodes.len() {
+            for j in 0..self.nodes[i].transitions.len() {
+                if let TransitionType::Alpha(c) = self.nodes[i].transitions[j].kind {
+                    self.nodes[i].transitions[j].kind = TransitionType::String(vec![c]);
+                }
+            }
+        }
+
+        loop {
+            let mut changed = false;
+
+            let mut incoming_counts = vec![0; self.nodes.len()];
+            for i in 0..self.nodes.len() {
+                for t in &self.nodes[i].transitions {
+                    incoming_counts[t.dest.id] += 1;
+                }
+            }
+
+            for i in 0..self.nodes.len() {
+                if i == start || i == end {
+                    continue;
+                }
+                if self.nodes[i].nt == NodeType::Accept {
+                    continue;
+                }
+
+                if self.nodes[i].transitions.len() == 1 && incoming_counts[i] == 1 {
+                    let outgoing_dest = self.nodes[i].transitions[0].dest.id;
+                    if let TransitionType::String(ref s2) = self.nodes[i].transitions[0].kind {
+                        let s2_clone = s2.clone();
+                        for prev in 0..self.nodes.len() {
+                            for t_idx in 0..self.nodes[prev].transitions.len() {
+                                if self.nodes[prev].transitions[t_idx].dest.id == i {
+                                    if let TransitionType::String(ref s1) =
+                                        self.nodes[prev].transitions[t_idx].kind
+                                    {
+                                        let mut new_s = s1.clone();
+                                        new_s.extend_from_slice(&s2_clone);
+                                        self.nodes[prev].transitions[t_idx].kind =
+                                            TransitionType::String(new_s);
+                                        self.nodes[prev].transitions[t_idx].dest =
+                                            NodePointer::new(outgoing_dest);
+                                        self.nodes[i].transitions.clear();
+                                        changed = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if changed {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+    }
 }
 pub fn get_new_state(
     old_nfa: &Nfa,
@@ -238,14 +297,14 @@ pub fn get_new_state(
 ) -> (NodePointer, Vec<usize>) {
     let e = old_nfa.e_closure(start);
     if let Some(i) = e_closure_map.get(&e) {
-        return (*i, e);
+        (*i, e)
     } else {
         let new_node = dfa.new_node();
         if e.contains(&old_end) {
             dfa.set_node_type(new_node, NodeType::Accept);
         }
         e_closure_map.insert(e.clone(), new_node);
-        return (new_node, e);
+        (new_node, e)
     }
 }
 pub fn nfa_to_dfa(
@@ -288,6 +347,8 @@ pub fn nfa_to_dfa(
     }
     let (endnode, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, end.id, end.id);
 
+    dfa.optimize(startnode.id, endnode.id);
+
     (dfa, startnode, endnode)
 }
 
@@ -296,18 +357,20 @@ pub enum Path {
     Open(usize),
     Close(usize),
     Char,
-    Query(usize)
+    String(usize),
+    Query(usize),
 }
 
 pub fn find_path(
     qe: &mut crate::nfa::queryengine::QueryEngine,
-    input: &String,
+    input: &[char],
     index: usize,
     nfa: &Nfa,
     node: NodePointer,
     path: &mut Vec<Path>,
 ) -> bool {
-    if let Some(cur_char) = input.chars().nth(index) {
+    if let Some(cur_char) = input.get(index) {
+        let cur_char = *cur_char;
         let mut longest_path: Option<Vec<Path>> = None;
         for transition in nfa.nodes[node.id].transitions.iter() {
             let mut new_path = Vec::new();
@@ -316,6 +379,33 @@ pub fn find_path(
                     if *c == cur_char {
                         new_path.push(Path::Char);
                         find_path(qe, input, index + 1, nfa, transition.dest, &mut new_path)
+                    } else {
+                        nfa.nodes[node.id].nt == NodeType::Accept
+                    }
+                }
+                TransitionType::String(s) => {
+                    let mut matched = true;
+                    for (i, c) in s.iter().enumerate() {
+                        if let Some(ic) = input.get(index + i) {
+                            if ic != c {
+                                matched = false;
+                                break;
+                            }
+                        } else {
+                            matched = false;
+                            break;
+                        }
+                    }
+                    if matched {
+                        new_path.push(Path::String(s.len()));
+                        find_path(
+                            qe,
+                            input,
+                            index + s.len(),
+                            nfa,
+                            transition.dest,
+                            &mut new_path,
+                        )
                     } else {
                         nfa.nodes[node.id].nt == NodeType::Accept
                     }
@@ -365,7 +455,6 @@ pub fn find_path(
                     }
                     //path.append(&mut new_path);
                     //return true;
-
                 } else {
                     longest_path = Some(new_path);
                 }
@@ -379,14 +468,11 @@ pub fn find_path(
         }
     } else {
         for transition in nfa.nodes[node.id].transitions.iter() {
-            match &transition.kind {
-                TransitionType::Close(i) => {
-                    if nfa.nodes[transition.dest.id].nt == NodeType::Accept {
-                        path.push(Path::Close(*i));
-                        return true;
-                    }
+            if let TransitionType::Close(i) = &transition.kind {
+                if nfa.nodes[transition.dest.id].nt == NodeType::Accept {
+                    path.push(Path::Close(*i));
+                    return true;
                 }
-                _ => {}
             }
         }
         nfa.nodes[node.id].nt == NodeType::Accept
@@ -422,7 +508,7 @@ impl Context {
     }
 
     pub fn contains(&self, i: &NodePointer) -> bool {
-        return self.nodes.contains(i);
+        self.nodes.contains(i)
     }
 
     fn open(&mut self, i: usize) {

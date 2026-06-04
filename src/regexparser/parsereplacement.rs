@@ -20,7 +20,7 @@ pub fn parse(text: &str) -> Result<Replacement, Box<dyn Error>> {
         v.push(p);
         i = n;
     }
-    Ok(Replacement {replacements: v})
+    Ok(Replacement { replacements: v })
 }
 
 /// Parses text until it finds the end of a ReplaceItem
@@ -39,8 +39,8 @@ fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn 
     if chars.next().ok_or("Out of characters")?.1 == '\\' {
         // We might be parsing a backreference
         let mut last = 0;
-        while let Some((i, c)) = chars.next() {
-            if !c.is_digit(10) {
+        for (i, c) in chars.by_ref() {
+            if !c.is_ascii_digit() {
                 break;
             } else {
                 last = i;
@@ -48,13 +48,13 @@ fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn 
         }
         if last != 0 {
             return Ok((
-                ReplaceItem::BackRef(text[start + 1..last+1].parse::<usize>()?),
+                ReplaceItem::BackRef(text[start + 1..last + 1].parse::<usize>()?),
                 last + 1,
             ));
         }
     }
     //If we are here, we are parsing text and not a backreference
-    while let Some((i, c)) = chars.next() {
+    for (i, c) in chars {
         if c == '\\' {
             return Ok((ReplaceItem::String(text[start..i].to_string()), i));
         }
@@ -66,7 +66,7 @@ fn parse_item(text: &str, start: usize) -> Result<(ReplaceItem, usize), Box<dyn 
 }
 
 #[test]
-fn parsing_replacement() -> Result<(), Box<dyn Error>>{
+fn parsing_replacement() -> Result<(), Box<dyn Error>> {
     let parsed = parse("bob\\\\\\13dole")?;
     if let ReplaceItem::String(s) = parsed.replacements.get(0).ok_or("sad")? {
         assert_eq!(s, "bob");

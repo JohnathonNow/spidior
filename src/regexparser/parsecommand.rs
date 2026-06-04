@@ -15,19 +15,29 @@ use super::ast;
 /// whether it is global or not (ends with a g)
 pub fn parse(text: &str) -> Result<ast::ReplaceUnparsed, Box<dyn Error>> {
     let (location, start) = parse_portion(text, 0)?;
-    if location.chars().last().ok_or("Location empty, expected at least an s")? != 's' {
+    if location
+        .chars()
+        .last()
+        .ok_or("Location empty, expected at least an s")?
+        != 's'
+    {
         return Err("s expected in location".into());
     }
     let (find, start) = parse_portion(text, start)?;
     let (replace, start) = parse_portion(text, start)?;
     let rest = &text[start..];
-    let global = if rest.len() == 0 {
+    let global = if rest.is_empty() {
         Ok(false)
     } else {
         if rest.len() != 1 {
             Err("Expected exactly one character after the replacement")
         } else {
-            if rest.chars().next().ok_or("Really expected at least one last char")? == 'g' {
+            if rest
+                .chars()
+                .next()
+                .ok_or("Really expected at least one last char")?
+                == 'g'
+            {
                 Ok(true)
             } else {
                 Err("Expected a g")

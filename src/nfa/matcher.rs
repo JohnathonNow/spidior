@@ -1,14 +1,12 @@
-use std::collections::{HashSet, LinkedList};
-
 #[cfg(test)]
 use crate::languages::clike::Clike;
+use crate::nfa::find_path;
 use crate::nfa::queryengine::QueryEngine;
 use crate::nfa::Group;
-use crate::nfa::{find_path, Context};
 use crate::regex2nfa::build_nfa;
 use crate::regexparser::ast::Regex;
 
-use super::{nfa_to_dfa, Nfa, NodePointer};
+use super::nfa_to_dfa;
 #[derive(Debug)]
 pub struct Match {
     start: usize,
@@ -67,6 +65,9 @@ fn path_to_matches(path: &Vec<crate::nfa::Path>, start: usize) -> Match {
             super::Path::Char => {
                 len += 1;
             }
+            super::Path::String(x) => {
+                len += x;
+            }
             super::Path::Query(x) => {
                 len += x;
             }
@@ -78,12 +79,15 @@ fn path_to_matches(path: &Vec<crate::nfa::Path>, start: usize) -> Match {
 pub fn find(qe: &mut QueryEngine, input: &String, regex: Box<Regex>) -> Vec<Match> {
     let mut v = Vec::new();
     let o = build_nfa(regex);
-    let (nfa, start, end) = nfa_to_dfa(&o.0, &o.1, &o.2);
+    let (nfa, start, _end) = nfa_to_dfa(&o.0, &o.1, &o.2);
     let mut is = 0;
-    while is <= input.len() {
+
+    let chars: Vec<char> = input.chars().collect();
+
+    while is <= chars.len() {
         let mut path = Vec::new();
         //qe.set_offset(is);
-        if find_path(qe, input, is, &nfa, start, &mut path) {
+        if find_path(qe, &chars, is, &nfa, start, &mut path) {
             let m = path_to_matches(&path, is);
             is += m.len;
             if m.len > 0 {
@@ -112,7 +116,11 @@ fn test_find() -> Result<(), Box<dyn std::error::Error>> {
     let regex = regexparser::parse("%s/(bob)|(joe)|(a*)//g")?.find;
     let mut qe = QueryEngine::build(&"bo".to_string(), Box::new(Clike {}), Box::new(Clike {}));
     assert_eq!(find(&mut qe, &"bo".to_string(), regex).len(), 0); //no match
-    let mut qe = QueryEngine::build(&"joejoe".to_string(), Box::new(Clike {}), Box::new(Clike {}));
+    let mut qe = QueryEngine::build(
+        &"joejoe".to_string(),
+        Box::new(Clike {}),
+        Box::new(Clike {}),
+    );
     let regex = regexparser::parse("%s/(bob)|(joe)|(a*)//g")?.find;
     assert_eq!(find(&mut qe, &"joejoe".to_string(), regex).len(), 2); //two matches
     let regex = regexparser::parse("%s/bob|joe|e*//g")?.find;

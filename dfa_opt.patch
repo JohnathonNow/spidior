@@ -1,0 +1,66 @@
+--- src/nfa/mod.rs
++++ src/nfa/mod.rs
+@@ -244,6 +244,64 @@
+     fn set_node_type(&mut self, node: NodePointer, nt: NodeType) {
+         self.nodes[node.id].set_type(nt);
+     }
++
++    pub fn optimize(&mut self, start: usize, end: usize) {
++        for i in 0..self.nodes.len() {
++            for j in 0..self.nodes[i].transitions.len() {
++                if let TransitionType::Alpha(c) = self.nodes[i].transitions[j].kind {
++                    self.nodes[i].transitions[j].kind = TransitionType::String(vec![c]);
++                }
++            }
++        }
++
++        loop {
++            let mut changed = false;
++
++            let mut incoming_counts = vec![0; self.nodes.len()];
++            for i in 0..self.nodes.len() {
++                for t in &self.nodes[i].transitions {
++                    incoming_counts[t.dest.id] += 1;
++                }
++            }
++
++            for i in 0..self.nodes.len() {
++                if i == start || i == end {
++                    continue;
++                }
++                if self.nodes[i].nt == NodeType::Accept {
++                    continue;
++                }
++
++                if self.nodes[i].transitions.len() == 1 && incoming_counts[i] == 1 {
++                    let outgoing_dest = self.nodes[i].transitions[0].dest.id;
++                    if let TransitionType::String(ref s2) = self.nodes[i].transitions[0].kind {
++                        let s2_clone = s2.clone();
++                        for prev in 0..self.nodes.len() {
++                            for t_idx in 0..self.nodes[prev].transitions.len() {
++                                if self.nodes[prev].transitions[t_idx].dest.id == i {
++                                    if let TransitionType::String(ref s1) = self.nodes[prev].transitions[t_idx].kind {
++                                        let mut new_s = s1.clone();
++                                        new_s.extend_from_slice(&s2_clone);
++                                        self.nodes[prev].transitions[t_idx].kind = TransitionType::String(new_s);
++                                        self.nodes[prev].transitions[t_idx].dest = NodePointer::new(outgoing_dest);
++                                        self.nodes[i].transitions.clear();
++                                        changed = true;
++                                        break;
++                                    }
++                                }
++                            }
++                            if changed {
++                                break;
++                            }
++                        }
++                    }
++                }
++            }
++            if !changed {
++                break;
++            }
++        }
++    }
+ }
+ pub fn get_new_state(

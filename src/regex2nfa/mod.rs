@@ -62,7 +62,7 @@ fn do_elem(r: Box<Elementary>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
         Elementary::Eos(_) => unimplemented!(),
         Elementary::Char(r) => do_char(r, nfa),
         Elementary::Set(r) => do_set(r, nfa),
-        Elementary::Nothing =>  do_nothing(nfa),
+        Elementary::Nothing => do_nothing(nfa),
     }
 }
 
@@ -93,7 +93,6 @@ fn do_any(nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     nfa.add_transition_any(&src, &dst).unwrap();
     (src, dst)
 }
-
 
 fn do_char(r: Box<Char>, nfa: &mut Nfa) -> (NodePointer, NodePointer) {
     let src = nfa.new_node();
