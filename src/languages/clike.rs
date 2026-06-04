@@ -9,7 +9,7 @@ pub struct Clike {}
 
 impl Clike {
     fn is_allowed(x: &str) -> bool {
-        !vec![
+        ![
             "public",
             "package",
             "private",
@@ -100,7 +100,11 @@ impl Functions for Clike {
                         braces -= 1;
                     }
                     if braces == 0 {
-                        v.push(Function::new(text[start..end].to_string(), start_body, i + 1));
+                        v.push(Function::new(
+                            text[start..end].to_string(),
+                            start_body,
+                            i + 1,
+                        ));
                         s = FunctionFsm::NONE;
                     }
                 }
@@ -262,7 +266,8 @@ fn test_replace_whole() {
             crate::regexparser::parse("%s/[[type=Session]]/sess/g").unwrap(),
             |_, _| true
         )
-        .unwrap().0,
+        .unwrap()
+        .0,
         expected
     );
 }

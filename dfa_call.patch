@@ -1,0 +1,10 @@
+--- src/nfa/mod.rs
++++ src/nfa/mod.rs
+@@ -318,6 +318,8 @@
+     }
+     let (endnode, _) = get_new_state(nfa, &mut dfa, &mut e_closure_map, end.id, end.id);
+
++    dfa.optimize(startnode.id, endnode.id);
++
+     (dfa, startnode, endnode)
+ }

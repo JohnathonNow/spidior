@@ -2,9 +2,9 @@ use clap::Parser;
 use languages::clike::Clike;
 use languages::parsing::*;
 use regexparser::ast;
+use std::io::{self, BufRead};
 use std::{error::Error, fs};
 use walkdir::WalkDir;
-use std::io::{self, BufRead};
 
 #[macro_use]
 extern crate lalrpop_util;
@@ -15,7 +15,7 @@ mod nfa;
 mod regex2nfa;
 mod regexparser;
 
-use crate::{regex2nfa::build_nfa, nfa::nfa_to_dfa};
+use crate::{nfa::nfa_to_dfa, regex2nfa::build_nfa};
 
 #[derive(Parser)]
 #[clap(version = "0.2.3", author = "John Westhoff <johnjwesthoff@gmail.com>")]
@@ -51,7 +51,7 @@ fn ask_rename(replace: &str, with: &str) -> bool {
     let mut answer = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut answer).unwrap();
-    return answer.to_lowercase().starts_with("y");
+    answer.to_lowercase().starts_with("y")
 }
 
 fn ask(replace: &str, with: &str) -> bool {
@@ -59,7 +59,7 @@ fn ask(replace: &str, with: &str) -> bool {
     let mut answer = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut answer).unwrap();
-    return answer.to_lowercase().starts_with("y");
+    answer.to_lowercase().starts_with("y")
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -74,12 +74,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn dump(opts: Opts) -> Result<(), Box<dyn Error>> {
     let c = Clike {};
     let mut dumps = Vec::new();
-    for entry in get_dir_iter(opts.recursive, &opts.path)
-    {
+    for entry in get_dir_iter(opts.recursive, &opts.path) {
         let path = entry.path();
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
-                dumps.push(Info::new(path.to_string_lossy().to_string(), c.read_functions(&contents), c.read_identifiers(&contents)));
+                dumps.push(Info::new(
+                    path.to_string_lossy().to_string(),
+                    c.read_functions(&contents),
+                    c.read_identifiers(&contents),
+                ));
             }
         }
     }
@@ -94,7 +97,11 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         let mut filenames = vec![];
         replace.location.get_filenames(&mut filenames);
         rename = Some(
-            filenames.iter().map(|f| regexparser::parse_rename(f, &rename_str)).filter(|x| x.is_ok()).map(|x| x.unwrap()).collect()
+            filenames
+                .iter()
+                .map(|f| regexparser::parse_rename(f, &rename_str))
+                .flatten()
+                .collect(),
         );
     }
     if opts.nfa {
@@ -103,14 +110,18 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
         eprintln!("NFA is `{}`", serde_json::to_string(&nfa).unwrap());
     }
 
-    for entry in get_dir_iter(opts.recursive, &opts.path)
-    {
+    for entry in get_dir_iter(opts.recursive, &opts.path) {
         let path = entry.path();
         if path.is_file() {
             if let Ok(contents) = fs::read_to_string(path) {
                 let f_name = entry.file_name().to_string_lossy();
                 let path_name = path.to_string_lossy().to_string();
-                let (res, did_change) = nfa::replacer::replace(&path_name, &contents, replace.clone(), if opts.interactive { ask } else { |_, _| true} )?;
+                let (res, did_change) = nfa::replacer::replace(
+                    &path_name,
+                    &contents,
+                    replace.clone(),
+                    if opts.interactive { ask } else { |_, _| true },
+                )?;
                 eprintln!("Parsing file {}", f_name);
                 if opts.in_place {
                     fs::write(path, &res)?;
@@ -120,7 +131,16 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
                 if let Some(renames) = &rename {
                     if did_change {
                         for rename in renames {
-                            let x = nfa::replacer::replace(&path_name, &path_name, rename.clone(), if opts.interactive { ask_rename } else { |_, _| true} )?;
+                            let x = nfa::replacer::replace(
+                                &path_name,
+                                &path_name,
+                                rename.clone(),
+                                if opts.interactive {
+                                    ask_rename
+                                } else {
+                                    |_, _| true
+                                },
+                            )?;
                             if x.1 {
                                 eprintln!("Renaming file '{}' to '{}'", &path_name, x.0);
                                 fs::rename(&path_name, x.0)?;
@@ -135,12 +155,10 @@ fn replace(opts: Opts) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn get_dir_iter(recursive: bool, path: &str) -> impl Iterator<Item=walkdir::DirEntry> {
+fn get_dir_iter(recursive: bool, path: &str) -> impl Iterator<Item = walkdir::DirEntry> {
     let mut iter = WalkDir::new(path);
     if !recursive {
         iter = iter.max_depth(1);
     }
-    iter.follow_links(true)
-        .into_iter()
-        .filter_map(|e| e.ok())
+    iter.follow_links(true).into_iter().filter_map(|e| e.ok())
 }

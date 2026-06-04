@@ -35,12 +35,13 @@ pub fn parse(text: &str) -> Result<ast::Replace, Box<dyn Error>> {
         .parse(&ru.location)
         .map_err(|x| format!("Failed to parse location: {}", x))?;
     let find = if ru.find.is_empty() {
-        Box::new(ast::Regex::Simple(Box::new(ast::Simple::Basic(Box::new(ast::Basic::Elementary(Box::new(ast::Elementary::Nothing)))))))
-
+        Box::new(ast::Regex::Simple(Box::new(ast::Simple::Basic(Box::new(
+            ast::Basic::Elementary(Box::new(ast::Elementary::Nothing)),
+        )))))
     } else {
         reg::RegexParser::new()
-        .parse(&ru.find)
-        .map_err(|x| format!("Failed to parse regex: {}", x))?
+            .parse(&ru.find)
+            .map_err(|x| format!("Failed to parse regex: {}", x))?
     };
     let replace = parsereplacement::parse(&ru.replace)?;
     Ok(Replace {
@@ -108,10 +109,18 @@ fn parsing_query() {
 fn parsing_location() {
     assert!(location::LocationParser::new().parse("<../../../>").is_ok());
     assert!(location::LocationParser::new().parse("{function}").is_ok());
-    assert!(location::LocationParser::new().parse("{function}|l1-5").is_ok());
-    assert!(location::LocationParser::new().parse("{function}&l1-5").is_ok());
-    assert!(location::LocationParser::new().parse("^{function}|l1-5").is_ok());
-    assert!(location::LocationParser::new().parse("(^{function}|l1-5)").is_ok());
+    assert!(location::LocationParser::new()
+        .parse("{function}|l1-5")
+        .is_ok());
+    assert!(location::LocationParser::new()
+        .parse("{function}&l1-5")
+        .is_ok());
+    assert!(location::LocationParser::new()
+        .parse("^{function}|l1-5")
+        .is_ok());
+    assert!(location::LocationParser::new()
+        .parse("(^{function}|l1-5)")
+        .is_ok());
     assert!(location::LocationParser::new().parse("l0-2").is_ok());
     assert!(location::LocationParser::new().parse("c0-2").is_ok());
     assert!(location::LocationParser::new().parse("%").is_ok());

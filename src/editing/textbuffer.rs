@@ -62,11 +62,7 @@ impl TextBuffer {
     /// A Result<String, Box<dyn Error>>, where on success, it returns
     /// the desired text. It will Err if you attempt to read more text
     /// than exists in the buffer.
-    pub fn get(
-        &mut self,
-        start: usize,
-        length: usize,
-    ) -> Result<String, Box<dyn Error>> {
+    pub fn get(&mut self, start: usize, length: usize) -> Result<String, Box<dyn Error>> {
         if self.buf.len() < start + length {
             return Err("Reading more of the string than exists".into());
         }
